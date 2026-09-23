@@ -760,3 +760,9 @@ body{font-weight:400}
 .rfp-foot{border-top:1px dashed #111;padding-top:8px}
 /* Key hints: Silkscreen has no arrow glyphs — use the mono body font. */
 .kbd{font-family:var(--font) !important;font-size:11px !important;text-transform:lowercase;border-width:1px !important;box-shadow:1px 1px 0 var(--ink) !important;border-radius:0 !important}
+/* Rare Friends house header strip (menu card only) */
+.rfHeader{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-8px -8px 12px;padding:0 0 9px;border-bottom:1px dashed var(--ink)}
+.rfHeader-brand{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:13px;letter-spacing:.18em;color:var(--ink);white-space:nowrap}
+.rfHeader-mark{width:22px;height:15px;display:block;color:var(--ink)}
+.rfHeader-app{font-family:var(--font);font-size:10.5px;color:var(--muted,#6b6b6b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:360px){.rfHeader-app{display:none}}
