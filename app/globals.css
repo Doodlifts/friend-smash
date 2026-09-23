@@ -6,50 +6,47 @@
    styles across components re-theme automatically. */
 
 :root{
+  /* Rare Friends house style (rarefriends.com): monochrome paper + ink,
+     square corners, thin black rules, small hard offset shadows. Signal green
+     is reserved for tiny status accents. Legacy token names are kept so the
+     inline styles across components re-theme automatically:
+       --grad-pink   = PRIMARY  -> solid ink, white text
+       --grad-purple = SECONDARY-> white, ink text + border */
   --ink:#111;
   --paper:#eee;
-  --panel:rgba(255,255,255,.88);
+  --panel:rgba(255,255,255,.92);
   --panel-solid:#ffffff;
-  /* Rare Friends palette */
+  --muted:#6b6b6b;
   --signal:#CCFF00;
-  --signal-hi:#e2ff66;
+  --signal-hi:#CCFF00;
   --meadow:#B9D984;
   --pond:#7DB4DB;
   --sun:#F2CE68;
   --coral:#ED927E;
   --lilac:#B3A0D8;
-  /* primary family (legacy name "pink"): --pink is the base fill, --pink-hi the
-     gradient top, --pink-deep the readable text-on-white accent. */
-  --pink:var(--signal);
-  --pink-hi:var(--signal-hi);
-  --pink-deep:#4a6600;
-  /* secondary family (legacy name "purple") = lilac */
-  --purple:var(--lilac);
-  --purple-hi:#d3c7ec;
-  --blue:var(--pond);
-  /* neutral/tinted surfaces */
+  --pink:#111;
+  --pink-hi:#111;
+  --pink-deep:#111;
+  --purple:#fff;
+  --purple-hi:#fff;
+  --blue:#fff;
   --surface:#f6f6f6;
-  --surface-purple:#f1edf9;
-  --surface-pink:#f6ffd6;
-  --surface-blue:#e3eff8;
-  --cream:#eaff99;
-  /* the two signature button gradients (single source of truth) */
-  --grad-pink:linear-gradient(180deg,var(--pink-hi),var(--pink));
-  --grad-purple:linear-gradient(180deg,var(--purple-hi),var(--purple));
-  /* elevation scale: hard, blur-free pixel offsets */
-  --sh-ctl:0 3px 0 var(--ink);
-  --sh-cta:0 4px 0 var(--ink);
-  --sh-card:6px 6px 0 var(--ink);
-  /* radius scale (pixel look) */
-  --r-row:4px; --r-ctl:6px; --r-cta:6px; --r-card:8px;
-  /* 1-bit dither used by the page + splash backdrops */
-  --dither:conic-gradient(rgba(17,17,17,.06) 25%, transparent 0 50%, rgba(17,17,17,.06) 0 75%, transparent 0);
-  /* motion: one pop curve + a small duration scale */
+  --surface-purple:#f4f4f4;
+  --surface-pink:#f4f4f4;
+  --surface-blue:#f4f4f4;
+  --cream:#eee;
+  --grad-pink:#111;
+  --grad-purple:#fff;
+  --sh-ctl:2px 2px 0 var(--ink);
+  --sh-cta:3px 3px 0 var(--ink);
+  --sh-card:4px 4px 0 var(--ink);
+  --r-row:0; --r-ctl:0; --r-cta:0; --r-card:0;
+  --dither:conic-gradient(rgba(17,17,17,.05) 25%, transparent 0 50%, rgba(17,17,17,.05) 0 75%, transparent 0);
   --ease-pop:cubic-bezier(.2,1.7,.4,1);
   --ease-out:cubic-bezier(.2,.7,.3,1);
   --t-fast:.16s; --t-in:.2s; --t-pop:.4s;
-  --font:'Space Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  --font-display:'Silkscreen', 'Space Mono', ui-monospace, monospace;
+  --font:'Sometype Mono', ui-monospace, Menlo, Consolas, monospace;
+  --font-display:'Silkscreen', 'Courier New', monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 /* Form controls inherit the brand font instead of the UA default — the reset
@@ -301,7 +298,7 @@ body{
   top:var(--smash-top,60%);bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
   min-height:96px;
   border:2.5px solid var(--ink);border-radius:var(--r-ctl);
-  background:repeating-linear-gradient(180deg,#e9e3f5 0 4px,#ddd3f0 4px 8px); /* lilac pixel-striped track */
+  background:#fff var(--dither);background-size:4px 4px; /* 1-bit dither track (house style) */
   box-shadow:inset 0 3px 0 rgba(17,17,17,.12), 0 3px 0 var(--ink);
   touch-action:none;user-select:none;-webkit-user-select:none;
 }
@@ -471,9 +468,9 @@ body{
   width:20px;height:20px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);
   animation:blHop .9s steps(4,end) infinite;
 }
-.bl-px.p1{background:var(--signal);animation-delay:0s}
-.bl-px.p2{background:var(--lilac);animation-delay:.15s}
-.bl-px.p3{background:var(--pond);animation-delay:.3s}
+.bl-px.p1{background:#111;animation-delay:0s}
+.bl-px.p2{background:#fff;animation-delay:.15s}
+.bl-px.p3{background:#111;animation-delay:.3s}
 @keyframes blHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
 .bl-word{
   font-family:var(--font-display);font-weight:700;font-size:34px;line-height:1;letter-spacing:1px;
@@ -602,9 +599,10 @@ h1,h2,h3,
    Several components paint a primary/secondary fill inline with white,
    ink-stroked text (tuned for the old pastel pink). On signal green and lilac
    that is unreadable, so any inline element using those fills gets ink text. */
-[style*="var(--grad-pink)"],[style*="var(--grad-purple)"],[style*="background: var(--pink)"],[style*="background:var(--pink)"]{
-  color:var(--ink) !important;-webkit-text-stroke:0 !important;text-shadow:none !important;
+[style*="var(--grad-pink)"],[style*="background: var(--pink)"],[style*="background:var(--pink)"]{
+  color:#fff !important;-webkit-text-stroke:0 !important;text-shadow:none !important;
 }
+[style*="var(--grad-purple)"]{color:var(--ink) !important;-webkit-text-stroke:0 !important;text-shadow:none !important}
 
 /* ---------- Friend picker modal (components/auth/FriendPicker.tsx) ---------- */
 .rfp-ov{
@@ -713,3 +711,52 @@ h1,h2,h3,
 .rfp-tabs button{flex:1;padding:7px 6px;border:2px solid var(--ink);background:#fff;font-family:var(--font-display,var(--font));font-size:11px;cursor:pointer}
 .rfp-tabs button.on{background:var(--signal,#CCFF00);box-shadow:2px 2px 0 var(--ink)}
 .rfp-input{flex:1 1 100%;min-width:0;height:40px;padding:0 10px;border:2px solid var(--ink);font-family:var(--font);font-size:13px;background:#fff;user-select:text;-webkit-user-select:text}
+
+
+/* =====================================================================
+   RARE FRIENDS HOUSE STYLE — overrides (keep last)
+   Matches rarefriends.com: bracketed lowercase mono buttons, black primary,
+   white secondary, letter-spaced black Silkscreen titles, 2px rules.
+   ===================================================================== */
+body{font-weight:400}
+.bigtitle,.page-title,.bl-word,.vsScore,.rfpool-big{text-shadow:none !important;letter-spacing:.12em}
+.bigtitle .t2{text-shadow:none !important}
+.card,.page-card,.rfp-card-panel{border-width:2px !important;box-shadow:var(--sh-card) !important;animation-name:none}
+.bigbtn,.page-cta,.rfp-btn,.vschip,.page-tab,.turfGo{
+  font-family:var(--font) !important;font-weight:500 !important;text-transform:lowercase;letter-spacing:.02em;
+  border-width:2px !important;box-shadow:var(--sh-cta) !important;
+}
+.bigbtn,.page-cta{font-size:16px !important}
+.bigbtn::before,.page-cta::before,.rfp-btn::before{content:"[ "}
+.bigbtn::after,.page-cta::after,.rfp-btn::after{content:" ]"}
+.bigbtn:not(.alt):not(.ghost),.page-cta:not(.alt):not(.ghost),.rfp-primary,.vschip.sel,.page-tab.active,.turfGo{
+  background:#111 !important;color:#fff !important;
+}
+.bigbtn.alt,.bigbtn.ghost,.page-cta.alt,.page-cta.ghost{background:#fff !important;color:#111 !important}
+.bigbtn:active,.page-cta:active,.rfp-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink) !important}
+.ss-knob{background:#111 !important;color:#fff !important;border-width:2px !important;box-shadow:var(--sh-cta) !important;font-family:var(--font) !important;text-transform:lowercase}
+.sidebox,#vsBar,#dailyToast,.page-row,.page-back{border-width:2px !important}
+.pop{color:#111 !important;-webkit-text-stroke:0 !important;text-shadow:2px 2px 0 #fff,-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff !important;letter-spacing:.08em}
+.vsCount{color:#111 !important;-webkit-text-stroke:0 !important;text-shadow:3px 3px 0 var(--signal) !important}
+#dailyToast .amt{color:#111}
+.chunky:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink) !important}
+/* Friend picker + pool bar in house style */
+.rfp-head b{letter-spacing:.12em}
+.rfp-tabs button{font-family:var(--font) !important;text-transform:lowercase}
+.rfp-tabs button.on{background:#111 !important;color:#fff !important;box-shadow:none}
+.rfp-card{border-width:2px !important}
+.rfp-card:hover{background:#f4f4f4}
+.rfpool-info{box-shadow:var(--sh-cta) !important;border-color:#111}
+.rfpool-pot b{color:#fff}
+.rfpool-pot b::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;background:var(--signal);vertical-align:1px}
+.rfpool-toggle{font-family:var(--font) !important;text-transform:lowercase;box-shadow:var(--sh-cta) !important}
+.rfpool-toggle.on{background:#111 !important;color:#fff}
+.rfpool-toggle.on::before{content:"";display:inline-block;width:8px;height:8px;background:var(--signal);margin-bottom:2px}
+.rfpool-big{text-shadow:none !important}
+.rfpool-list li{border-width:1px}
+.rfpool-list li.you{background:#111 !important;color:#fff}
+.rfpool-me{background:#fff !important;border-style:dashed !important}
+/* dashed separators like the site's nav rule */
+.rfp-foot{border-top:1px dashed #111;padding-top:8px}
+/* Key hints: Silkscreen has no arrow glyphs — use the mono body font. */
+.kbd{font-family:var(--font) !important;font-size:11px !important;text-transform:lowercase;border-width:1px !important;box-shadow:1px 1px 0 var(--ink) !important;border-radius:0 !important}

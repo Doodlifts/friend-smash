@@ -55,13 +55,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Silkscreen (pixel display) + Space Mono (body), from Google Fonts. */}
+        {/* Rare Friends house type: Silkscreen (display) + Sometype Mono (body). */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Root-layout font link applies to every route (the lint rule targets the Pages Router _document case). */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Sometype+Mono:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
       </head>

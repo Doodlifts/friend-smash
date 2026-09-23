@@ -114,27 +114,32 @@ export function spriteFor(t: PieceType): SpriteRows {
 }
 
 /**
- * Draw one Friend sprite into a 96×96 cell (6px pixels, edge to edge), the
- * piece colour with a 1-pixel ink halo (the FriendSDK reference look, in
- * colour so shapes stay readable). "blood" = the flash variant for pieces in a
- * clearing row: white body, colour halo.
+ * Draw one Friend into a 96×96 cell in the Rare Friends house look: the
+ * canonical black 1-bit sprite with a 1-pixel white halo (FriendSDK reference
+ * style), over a faint wash of the piece's palette colour so the seven shapes
+ * stay readable at speed. 6px pixels, edge to edge.
+ * "blood" = flash variant for pieces in a clearing row: inverted (ink cell,
+ * white Friend).
  */
 export function drawSpriteCell(c: CanvasRenderingContext2D, x: number, y: number, rows: SpriteRows, color: string, flash: boolean) {
-  // 6px pixels: the 16×16 sprite fills the whole 96px cell (sprites carry
-  // their own blank margin, so neighbouring Friends still read as separate).
   const px = 6;
-  const ox = x;
-  const oy = y;
   const on = (r: number, q: number) => r >= 0 && r < 16 && q >= 0 && q < 16 && rows[r][q] === "#";
-  c.fillStyle = flash ? color : INK;
+  // tint wash (inset 3px so neighbouring cells read as separate Friends)
+  c.save();
+  c.globalAlpha = flash ? 1 : 0.42;
+  c.fillStyle = flash ? INK : color;
+  c.fillRect(x + 3, y + 3, 90, 90);
+  c.restore();
+  // 1-px halo
+  c.fillStyle = flash ? INK : "#ffffff";
   for (let r = -1; r <= 16; r++)
     for (let q = -1; q <= 16; q++) {
       if (on(r, q)) continue;
       if (on(r - 1, q) || on(r + 1, q) || on(r, q - 1) || on(r, q + 1) || on(r - 1, q - 1) || on(r + 1, q + 1) || on(r - 1, q + 1) || on(r + 1, q - 1))
-        c.fillRect(ox + q * px, oy + r * px, px, px);
+        if (r >= 0 && r < 16 && q >= 0 && q < 16) c.fillRect(x + q * px, y + r * px, px, px);
     }
-  c.fillStyle = flash ? "#ffffff" : color;
-  for (let r = 0; r < 16; r++) for (let q = 0; q < 16; q++) if (on(r, q)) c.fillRect(ox + q * px, oy + r * px, px, px);
+  c.fillStyle = flash ? "#ffffff" : INK;
+  for (let r = 0; r < 16; r++) for (let q = 0; q < 16; q++) if (on(r, q)) c.fillRect(x + q * px, y + r * px, px, px);
 }
 
 /** A piece canvas for an explicit cell layout (used for every rotation so sprites stay upright). */
@@ -173,30 +178,24 @@ const GLYPHS: Record<string, string[]> = {
 };
 
 export function wordmarkDataUrl(lines: string[] = ["FRIEND", "SMASH!"], px = 10): string {
-  const cols = Math.max(...lines.map((l) => l.length)) * 6 - 1;
-  const pad = px * 2;
+  // Rare Friends house wordmark: plain black pixels, wide letter spacing.
+  const adv = 7; // 5px glyph + 2px tracking
+  const cols = Math.max(...lines.map((l) => l.length)) * adv - 2;
+  const pad = px;
   const cv = document.createElement("canvas");
   cv.width = cols * px + pad * 2;
-  cv.height = (lines.length * 9 - 2) * px + pad * 2;
+  cv.height = (lines.length * 10 - 3) * px + pad * 2;
   const c = cv.getContext("2d")!;
-  // Each glyph pixel -> callback(x, y, lineIndex)
-  const each = (fn: (x: number, y: number, li: number) => void) =>
-    lines.forEach((line, li) => {
-      const lx = Math.floor((cols - (line.length * 6 - 1)) / 2);
-      [...line].forEach((ch, ci) =>
-        (GLYPHS[ch] ?? GLYPHS[" "]).forEach((row, ry) =>
-          [...row].forEach((b, rx) => {
-            if (b === "#") fn(pad + (lx + ci * 6 + rx) * px, pad + (li * 9 + ry) * px, li);
-          }),
-        ),
-      );
-    });
   c.fillStyle = INK;
-  each((x, y) => c.fillRect(x - 3 + px * 0.5, y - 3 + px * 0.5, px + 6, px + 6)); // drop shadow
-  each((x, y) => c.fillRect(x - 3, y - 3, px + 6, px + 6)); // outline
-  each((x, y, li) => {
-    c.fillStyle = li === lines.length - 1 ? SIGNAL : "#ffffff";
-    c.fillRect(x, y, px, px);
+  lines.forEach((line, li) => {
+    const lx = Math.floor((cols - (line.length * adv - 2)) / 2);
+    [...line].forEach((ch, ci) =>
+      (GLYPHS[ch] ?? GLYPHS[" "]).forEach((row, ry) =>
+        [...row].forEach((bit, rx) => {
+          if (bit === "#") c.fillRect(pad + (lx + ci * adv + rx) * px, pad + (li * 10 + ry) * px, px, px);
+        }),
+      ),
+    );
   });
   return cv.toDataURL("image/png");
 }

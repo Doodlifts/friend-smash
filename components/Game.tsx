@@ -143,7 +143,7 @@ export default function Game() {
           <button className="bigbtn alt" id="btnVersus">VERSUS</button>
           <div className="freeplay">
             <b>Free to play — no wallet needed.</b>
-            <br />Connect a hardwired Rare Friend to play ranked for simulated RF prize pools.
+            <br />Pick your Rare Friend (paste your address — read-only) and your pieces become your Friends. Ranked pools use simulated $RAREFRIENDS.
           </div>
           <button className="worldchip" id="btnWorldOpen">Friends in your world</button>
         </div>

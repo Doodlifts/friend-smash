@@ -38,6 +38,15 @@ export interface SignedIn {
 let publicClient: ReturnType<typeof createFriendPublicClient> | null = null;
 const reads = () => (publicClient ??= createFriendPublicClient());
 
+/** Share discovery with components/FriendPieces (same session cache key). */
+function rememberOwned(owner: string, friends: readonly OwnedFriend[]) {
+  try {
+    sessionStorage.setItem(`rfsmashOwned:${owner.toLowerCase()}`, JSON.stringify(friends.map((f) => f.id.toString())));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 export default function FriendPicker({
   wallet,
   onClose,
@@ -66,6 +75,7 @@ export default function FriendPicker({
     setPastedDisc({ state: "loading" });
     try {
       const r = await readOwnedFriends(reads(), a as Address);
+      rememberOwned(a, r.friends);
       setPastedDisc({ state: "done", friends: r.friends, hidden: r.hiddenCount });
     } catch (e) {
       setPastedDisc({ state: "error", error: e instanceof Error ? e.message : String(e) });
@@ -103,7 +113,10 @@ export default function FriendPicker({
     const ctrl = new AbortController();
     setDisc({ state: "loading" });
     readOwnedFriends(reads(), snap.account, { signal: ctrl.signal })
-      .then((r) => setDisc({ state: "done", friends: r.friends, hidden: r.hiddenCount }))
+      .then((r) => {
+        rememberOwned(snap.account!, r.friends);
+        setDisc({ state: "done", friends: r.friends, hidden: r.hiddenCount });
+      })
       .catch((e) => {
         if (!ctrl.signal.aborted) setDisc({ state: "error", error: e instanceof Error ? e.message : String(e) });
       });

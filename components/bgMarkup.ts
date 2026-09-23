@@ -17,15 +17,15 @@ function sparkle(x: number, y: number, s: number, fill: string): string {
 }
 
 const SPARKLES: [number, number, number, string][] = [
-  [70, 120, 4, "#CCFF00"],
-  [410, 90, 3, "#CCFF00"],
-  [440, 470, 4, "#CCFF00"],
-  [36, 560, 3, "#B3A0D8"],
-  [250, 40, 3, "#CCFF00"],
-  [120, 780, 4, "#CCFF00"],
-  [380, 820, 3, "#7DB4DB"],
-  [455, 300, 2, "#CCFF00"],
-  [22, 330, 2, "#CCFF00"],
+  [70, 120, 4, "#111111"],
+  [410, 90, 3, "#111111"],
+  [440, 470, 4, "#111111"],
+  [36, 560, 3, "#111111"],
+  [250, 40, 3, "#111111"],
+  [120, 780, 4, "#111111"],
+  [380, 820, 3, "#111111"],
+  [455, 300, 2, "#111111"],
+  [22, 330, 2, "#111111"],
 ];
 
 // lone ink specks, 1-bit style
@@ -54,11 +54,6 @@ export const BG_SVG = String.raw`
   ${SPARKLES.map(([x, y, s, f]) => sparkle(x, y, s, f)).join("\n  ")}
   <!-- palette strip footer -->
   <g>
-    <rect x="0" y="884" width="96" height="16" fill="#CCFF00"/>
-    <rect x="96" y="884" width="96" height="16" fill="#B9D984"/>
-    <rect x="192" y="884" width="96" height="16" fill="#7DB4DB"/>
-    <rect x="288" y="884" width="96" height="16" fill="#F2CE68"/>
-    <rect x="384" y="884" width="96" height="16" fill="#ED927E"/>
     <rect x="0" y="881" width="480" height="3" fill="#111"/>
   </g>
 </svg>

@@ -718,7 +718,7 @@ export function startEngine(): () => void {
               vy: -CELL*(1 + Math.random()*2.6),
               r: CELL*(Math.random()<.5 ? .16 : .26),       // two chunky pixel sizes
               rot: 0, vr: (Math.random()-.5)*6,
-              col: Math.random()<.2 ? INK : col,
+              col: Math.random()<.45 ? INK : col,
             });
           }
         }
@@ -746,8 +746,8 @@ export function startEngine(): () => void {
     const el = document.createElement("div");
     el.setAttribute("aria-hidden", "true");
     el.style.cssText = "position:fixed;inset:0;z-index:25;pointer-events:none;"
-      + "background-image:conic-gradient(#CCFF00 25%,transparent 0 50%,#CCFF00 0 75%,transparent 0);"
-      + "background-size:8px 8px;image-rendering:pixelated;opacity:"+(0.18+n*0.08).toFixed(2)+";"
+      + "background-image:conic-gradient(#111 25%,transparent 0 50%,#111 0 75%,transparent 0);"
+      + "background-size:8px 8px;image-rendering:pixelated;opacity:"+(0.08+n*0.04).toFixed(2)+";"
       + "transition:opacity .28s steps(4)";
     root.appendChild(el);
     requestAnimationFrame(()=>{ el.style.opacity = "0"; });
@@ -1043,7 +1043,7 @@ export function startEngine(): () => void {
         x:(cx+.5)*CELL + (Math.random()-.5)*CELL, y:(cy+.5)*CELL,
         vx:(Math.random()-.5)*.7, vy:-Math.random()*.9-.15,
         r: 8+Math.random()*16, life: 1,
-        col: Math.random()<.7 ? BLOOD : "#ffffff",
+        col: Math.random()<.6 ? INK : "#ffffff",
       });
     }
   }
