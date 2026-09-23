@@ -17,6 +17,7 @@ import { getRankedPref, setRankedPref, RANKED_CHANGED } from "@/lib/rf/rankedPre
 
 interface Standing {
   rank: number;
+  verified?: boolean;
   friendId: string | null;
   handle: string | null;
   score: number;
@@ -52,7 +53,8 @@ function useCountdown(iso: string | undefined) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-const name = (s: Standing) => s.handle || (s.friendId ? `Friend #${s.friendId}` : "Friend");
+const name = (s: Standing) =>
+  (s.verified === false ? "👁 " : "") + (s.handle || (s.friendId ? `Friend #${s.friendId}` : "Friend"));
 
 export default function PoolPanel() {
   const { authenticated, getAccessToken, login } = useAuth();

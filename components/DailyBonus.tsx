@@ -1,12 +1,13 @@
 "use client";
 
-/* components/DailyBonus.tsx — claims the once-per-day $SMASH bonus on load for
+/* components/DailyBonus.tsx — claims the once-per-day RF bonus on load for
    a signed-in player and shows a brief streak toast. Decoupled from the canvas
    engine (lives in the Privy tree). Claiming is idempotent server-side, so the
    POST is safe to fire on every mount; we only toast when something was awarded. */
 
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { formatRf } from "@/lib/rf/format";
 
 export default function DailyBonus() {
   return <DailyBonusInner />;
@@ -51,9 +52,9 @@ function DailyBonusInner() {
   if (!toast) return null;
   return (
     <div id="dailyToast" className={leaving ? "leaving" : undefined} role="status" aria-live="polite">
-      <span className="amt num">+{toast.amount} $SMASH</span>
+      <span className="amt num">+{formatRf(toast.amount)} RF</span>
       <span className="strk">
-        {toast.streak > 1 ? `Day ${toast.streak} streak!` : "Fresh $SMASH, on the house."}
+        {toast.streak > 1 ? `Day ${toast.streak} streak! (simulated RF)` : "Daily claim — simulated RF, no real tokens."}
       </span>
     </div>
   );

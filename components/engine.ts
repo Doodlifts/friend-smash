@@ -19,7 +19,7 @@
    This file is browser-only and must run after the DOM has mounted.
    ============================================================ */
 
-import { pieceDataUrl, wordmarkDataUrl, PIECE_STYLE } from "@/lib/rf/pieceArt";
+import { pieceDataUrl, pieceCanvas, wordmarkDataUrl, PIECE_STYLE } from "@/lib/rf/pieceArt";
 import { bombBlast } from "@/lib/pieces";
 import { SevenBag, randomSeed } from "@/lib/rng";
 import {
@@ -246,27 +246,18 @@ export function startEngine(): () => void {
     return buildArt().then(()=>artReady);
   }
 
+  /* Rare Friends: instead of rotating the piece IMAGE (which would lay the
+     pixel Friends on their sides), draw each rotation's cell layout with the
+     sprites upright. The art body always starts at (0,0) and exactly fills the
+     rotated bbox, so dx/dy stay 0 — identical to what the old rotation math
+     produced for this art, so slicing/turf/ghost code is unaffected. */
   function rotCanvas(t, v, r){
     const key = t+"_"+v+"_"+r;
     if (rotCache[key]) return rotCache[key];
-    const a = art[t][v];
-    let w = a.fw, h = a.fh, dx = a.dx, dy = a.dy;
-    let bw = GRIDS[t][0]*CELL, bh = GRIDS[t][1]*CELL;
-    const W = (r%2) ? h : w, H = (r%2) ? w : h;
-    const cv = document.createElement("canvas");
-    cv.width = W; cv.height = H;
-    const c = cv.getContext("2d");
-    c.translate(W/2, H/2); c.rotate(r*Math.PI/2);
-    // belt-and-braces: a broken Image would make drawImage THROW on every
-    // frame — skip the blit (blank sprite) rather than kill render loops
-    try{ if (a.img.naturalWidth > 0) c.drawImage(a.img, -w/2, -h/2); }catch(_){ }
-    for (let i=0;i<r;i++){
-      const ndx = h - dy - bh, ndy = dx;
-      dx = ndx; dy = ndy;
-      const tmp = bw; bw = bh; bh = tmp;
-      const tw = w; w = h; h = tw;
-    }
-    return rotCache[key] = {cv, dx, dy, fw:W, fh:H};
+    const st = STATES[t][r];
+    const cells = st.cells.map(([x,y])=>[x - st.bx, y - st.by]);
+    const cv = pieceCanvas(t, v, cells, st.w, st.h);
+    return rotCache[key] = {cv, dx:0, dy:0, fw:cv.width, fh:cv.height};
   }
 
   /* ============================================================ AUDIO */
@@ -3751,6 +3742,8 @@ export function startEngine(): () => void {
 
   // test hook (parity with the original; handy for unit/replay checks)
   window.__DS = {G, STATES, KICKS_I, KICKS_JLSTZ, collides, spawn, tryMove, tryRotate, hardDrop, lockPiece, finishClear, reset, emptyGrid, gravityMs:()=>gravityMs(G.level), recorder, usePowerup,
+    // Rebuild piece art after the signed-in wallet's Friends load (lib/rf/pieceArt).
+    refreshArt: ()=>buildArt(),
     // Whether the current game is a server-sanctioned (ranked) run. The
     // power-up tray hides for unranked games — spends couldn't settle.
     ranked: ()=>!!activeRun,

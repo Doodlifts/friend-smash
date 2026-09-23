@@ -40,7 +40,9 @@ export async function adminContext(req: Request): Promise<AdminCtx | NextRespons
   if (!verified) {
     return NextResponse.json({ authenticated: false, error: "Unauthorized." }, { status: 401 });
   }
-  if (!isAdminWallet(verified.owner)) {
+  // Pasted-address (read-only) sessions never prove control of a wallet, so
+  // they can never be admin — only wallet-SIGNED sessions count.
+  if (!verified.verified || !isAdminWallet(verified.owner)) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
   return { db: getDb() as DrizzleDb, did: verified.did, wallet: verified.owner };

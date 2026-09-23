@@ -253,8 +253,8 @@ function AuthBarInner() {
                   Bring a Friend
                 </div>
                 <div style={{ fontWeight: 600, fontSize: 13, opacity: 0.75 }}>
-                  Connect the wallet holding your hardwired Rare Friend (gen 1+) on Robinhood Chain to
-                  play ranked, win RF pools and buy upgrades.
+                  Paste the address that holds your hardwired Rare Friend (read-only, nothing to sign) or
+                  connect the wallet itself. Your pieces become your Friends.
                 </div>
                 <button
                   className="chunky"
@@ -264,7 +264,7 @@ function AuthBarInner() {
                     login();
                   }}
                 >
-                  CONNECT WALLET
+                  PICK YOUR FRIEND
                 </button>
                 <button
                   className="chunky"
@@ -285,7 +285,8 @@ function AuthBarInner() {
                   Rare Friend #{user?.friendId}
                 </div>
                 <div style={{ fontWeight: 600, fontSize: 12, opacity: 0.7, marginBottom: 8 }}>
-                  owner {user ? short(user.owner) : "—"}
+                  {user?.verified === false ? "👁 read-only · " : "✓ wallet-verified · "}
+                  {user ? short(user.owner) : "—"}
                 </div>
 
                 <div style={{ textAlign: "left", fontWeight: 800, fontSize: 12, opacity: 0.6, letterSpacing: 1 }}>

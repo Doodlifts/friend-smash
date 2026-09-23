@@ -96,6 +96,8 @@ export async function enterPool(
 export interface Standing {
   rank: number;
   userId: string;
+  /** false = read-only (pasted address) account. */
+  verified?: boolean;
   friendId: string | null;
   handle: string | null;
   score: number;
@@ -106,16 +108,17 @@ export async function poolStandings(db: DrizzleDb, day: string, limit = POOL_PAI
   // Tie-break: earliest time the Friend reached its best (first to the score wins).
   const firstAt = sql<Date>`min(${scores.createdAt})`;
   const rows = await db
-    .select({ userId: users.id, friendId: users.friendId, handle: users.handle, best, firstAt })
+    .select({ userId: users.id, did: users.did, friendId: users.friendId, handle: users.handle, best, firstAt })
     .from(scores)
     .innerJoin(users, eq(users.id, scores.userId))
     .where(eq(scores.period, poolPeriod(day)))
-    .groupBy(users.id, users.friendId, users.handle)
+    .groupBy(users.id, users.did, users.friendId, users.handle)
     .orderBy(desc(best), firstAt)
     .limit(limit);
   return rows.map((r, i) => ({
     rank: i + 1,
     userId: r.userId,
+    verified: !r.did.startsWith("watch:"),
     friendId: r.friendId,
     handle: r.handle,
     score: Number(r.best),

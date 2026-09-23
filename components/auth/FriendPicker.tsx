@@ -10,7 +10,7 @@
    ============================================================ */
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { toHex } from "viem";
+import { isAddress, toHex, type Address } from "viem";
 import { createSiweMessage } from "viem/siwe";
 import type { FriendWalletSession } from "@rarefriends/friendsdk/wallet";
 import { createFriendPublicClient } from "@rarefriends/friendsdk/wallet";
@@ -32,6 +32,7 @@ export interface SignedIn {
   owner: string;
   friendWallet: string | null;
   generation?: number;
+  verified: boolean;
 }
 
 let publicClient: ReturnType<typeof createFriendPublicClient> | null = null;
@@ -51,6 +52,47 @@ export default function FriendPicker({
   const [attempt, setAttempt] = useState(0);
   const [signing, setSigning] = useState<string | null>(null);
   const [signError, setSignError] = useState("");
+  // READ-ONLY mode: paste any address, list its Friends, play unverified.
+  const [mode, setMode] = useState<"wallet" | "address">(snap.status === "unavailable" ? "address" : "wallet");
+  const [pasted, setPasted] = useState("");
+  const [pastedDisc, setPastedDisc] = useState<Discovery>({ state: "idle" });
+
+  const lookUp = useCallback(async () => {
+    const a = pasted.trim();
+    if (!isAddress(a, { strict: false })) {
+      setPastedDisc({ state: "error", error: "That isn't a valid 0x… wallet address." });
+      return;
+    }
+    setPastedDisc({ state: "loading" });
+    try {
+      const r = await readOwnedFriends(reads(), a as Address);
+      setPastedDisc({ state: "done", friends: r.friends, hidden: r.hiddenCount });
+    } catch (e) {
+      setPastedDisc({ state: "error", error: e instanceof Error ? e.message : String(e) });
+    }
+  }, [pasted]);
+
+  const watchIn = useCallback(
+    async (f: OwnedFriend) => {
+      setSigning(f.id.toString());
+      setSignError("");
+      try {
+        const res = await fetch("/api/auth/watch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: pasted.trim(), friendId: f.id.toString() }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Couldn't load that Friend.");
+        onSignedIn(data as SignedIn);
+      } catch (e) {
+        setSignError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setSigning(null);
+      }
+    },
+    [pasted, onSignedIn],
+  );
 
   // Discover owned Friends whenever the identity (revision) settles on Robinhood.
   useEffect(() => {
@@ -193,6 +235,56 @@ export default function FriendPicker({
     );
   }
 
+  if (mode === "address") {
+    const d = pastedDisc;
+    body = (
+      <>
+        <p>
+          Paste the wallet address that holds your hardwired Friend. <b>Read-only:</b> nothing to connect or sign —
+          your wallet is never touched.
+        </p>
+        <div className="rfp-row">
+          <input
+            className="rfp-input"
+            value={pasted}
+            onChange={(e) => setPasted(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && void lookUp()}
+            placeholder="0x…"
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+            inputMode="text"
+            aria-label="Wallet address"
+          />
+          <button className="rfp-btn rfp-primary" disabled={d.state === "loading"} onClick={() => void lookUp()}>
+            {d.state === "loading" ? "Looking…" : "Find Friends"}
+          </button>
+        </div>
+        {d.state === "error" && <p className="rfp-err">{d.error}</p>}
+        {d.state === "done" && d.friends.length === 0 && (
+          <p>No hardwired Friends at that address{d.hidden > 0 ? ` (${d.hidden} generation-0 hidden)` : ""}.</p>
+        )}
+        {d.state === "done" && d.friends.length > 0 && (
+          <div className="rfp-grid">
+            {d.friends.map((f) => (
+              <button key={f.id.toString()} className="rfp-card" disabled={signing !== null} onClick={() => void watchIn(f)}>
+                <FriendPortrait friendId={f.id} size={72} animate />
+                <span>#{f.id.toString()}</span>
+                <small>gen {f.generation}</small>
+                {signing === f.id.toString() && <em>Loading…</em>}
+              </button>
+            ))}
+          </div>
+        )}
+        {signError && <p className="rfp-err">{signError}</p>}
+        <p className="rfp-note">
+          Read-only Friends play with a separate simulated RF balance and are marked 👁 on leaderboards. Sign in with
+          the wallet to play as the verified Friend.
+        </p>
+      </>
+    );
+  }
+
   return (
     <div className="rfp-ov" role="dialog" aria-modal="true" aria-label="Choose your Rare Friend" onClick={onClose}>
       <div className="rfp-card-panel" onClick={(e) => e.stopPropagation()}>
@@ -200,8 +292,16 @@ export default function FriendPicker({
           <b>PLAY AS YOUR FRIEND</b>
           <button className="rfp-x" aria-label="Close" onClick={onClose}>×</button>
         </div>
+        <div className="rfp-tabs" role="tablist">
+          <button role="tab" aria-selected={mode === "address"} className={mode === "address" ? "on" : ""} onClick={() => setMode("address")}>
+            PASTE ADDRESS
+          </button>
+          <button role="tab" aria-selected={mode === "wallet"} className={mode === "wallet" ? "on" : ""} onClick={() => setMode("wallet")}>
+            CONNECT WALLET
+          </button>
+        </div>
         {body}
-        {snap.account && (
+        {mode === "wallet" && snap.account && (
           <div className="rfp-foot">
             <span>{snap.account.slice(0, 6)}…{snap.account.slice(-4)}</span>
             <button className="rfp-link" onClick={() => wallet.disconnect()}>Disconnect</button>

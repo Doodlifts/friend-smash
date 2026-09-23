@@ -28,6 +28,8 @@ export interface FriendUser {
   owner: string;
   friendWallet: string | null;
   generation?: number;
+  /** false = read-only session from a pasted address (no signature). */
+  verified: boolean;
 }
 
 interface StoredSession extends FriendUser {
@@ -107,7 +109,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const unsub = w.subscribe(() => {
       const snap = w.getSnapshot();
       const s = sessionRef.current;
-      if (s && snap.account && snap.account.toLowerCase() !== s.owner.toLowerCase()) apply(null);
+      // Read-only (pasted-address) sessions aren't tied to the connected wallet.
+      if (s && s.verified !== false && snap.account && snap.account.toLowerCase() !== s.owner.toLowerCase()) apply(null);
     });
     setReady(true);
     return () => {
@@ -121,7 +124,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       ready,
       authenticated: Boolean(session),
       user: session
-        ? { friendId: session.friendId, owner: session.owner, friendWallet: session.friendWallet, generation: session.generation }
+        ? {
+            friendId: session.friendId,
+            owner: session.owner,
+            friendWallet: session.friendWallet,
+            generation: session.generation,
+            verified: session.verified !== false,
+          }
         : null,
       login: () => setPickerOpen(true),
       logout: () => {

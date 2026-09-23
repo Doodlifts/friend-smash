@@ -8,6 +8,14 @@
         wallet, via viem), then FriendSDK's readGenerationEligibility must say
         the signer owns that hardwired Friend. Issues a session token.
 
+   READ-ONLY MODE (vibeathon demo): POST /api/auth/watch takes a PASTED wallet
+   address, checks on-chain that it holds that hardwired Friend, and issues an
+   UNVERIFIED session ("watch:<tokenId>"). No signature, so it proves the
+   wallet holds the Friend, not that the player controls it — which is why
+   watch accounts are separate from the signed "friend:<tokenId>" account (a
+   pasted address can never spend or win as the real owner) and are labelled
+   read-only everywhere.
+
    The PLAYER IDENTITY IS THE FRIEND ("friend:<tokenId>"), not the wallet: per
    FriendSDK, items and rewards belong to the NFT, so a sold Friend takes its
    (mock) RF balance, inventory and leaderboard history with it.
@@ -23,10 +31,12 @@ export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 export const NONCE_TTL_MS = 5 * 60 * 1000;
 
 export interface SessionPayload {
-  did: string; // "friend:<tokenId>"
+  did: string; // "friend:<tokenId>" (wallet-signed) or "watch:<tokenId>" (pasted address)
   friendId: string; // decimal token id
   owner: Address; // wallet that signed in
   friendWallet: Address | null; // canonical token-bound account
+  /** true = signed in with the wallet (SIWE); false = read-only pasted address. */
+  verified: boolean;
   exp: number;
 }
 
@@ -35,9 +45,11 @@ export interface VerifiedUser {
   friendId: bigint;
   owner: Address;
   friendWallet: Address | null;
+  verified: boolean;
 }
 
-export const friendDid = (friendId: bigint | string) => `friend:${BigInt(friendId).toString()}`;
+export const friendDid = (friendId: bigint | string, verified = true) =>
+  `${verified ? "friend" : "watch"}:${BigInt(friendId).toString()}`;
 
 /** Auth works whenever the signing secret is present (no third-party service). */
 export function isAuthConfigured(): boolean {
@@ -49,7 +61,7 @@ export function issueSession(p: Omit<SessionPayload, "exp" | "did">, now = Date.
   exp: number;
 } {
   const exp = now + SESSION_TTL_MS;
-  const token = signToken<SessionPayload>("session", { ...p, did: friendDid(p.friendId), exp });
+  const token = signToken<SessionPayload>("session", { ...p, did: friendDid(p.friendId, p.verified), exp });
   return { token, exp };
 }
 
@@ -63,6 +75,7 @@ export function getAccessToken(req: Request): string | null {
 export async function verifyRequest(req: Request): Promise<VerifiedUser | null> {
   const p = verifyToken<SessionPayload>("session", getAccessToken(req));
   if (!p || typeof p.friendId !== "string" || !/^[1-9]\d{0,77}$/.test(p.friendId)) return null;
-  if (p.did !== friendDid(p.friendId)) return null;
-  return { did: p.did, friendId: BigInt(p.friendId), owner: p.owner, friendWallet: p.friendWallet };
+  const verified = p.verified !== false;
+  if (p.did !== friendDid(p.friendId, verified)) return null;
+  return { did: p.did, friendId: BigInt(p.friendId), owner: p.owner, friendWallet: p.friendWallet, verified };
 }

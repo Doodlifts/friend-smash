@@ -91,8 +91,10 @@ export async function POST(req: Request) {
     friendId: friendId.toString(),
     owner: msg.address,
     friendWallet: elig.friendWallet,
+    verified: true,
   });
   return NextResponse.json({
+    verified: true,
     token,
     exp,
     friendId: friendId.toString(),
