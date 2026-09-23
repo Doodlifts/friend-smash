@@ -4,7 +4,7 @@
 
 Built for the [Rare Friends Vibeathon](https://github.com/spokesz/rarefriends-vibeathon) · categories: **Token Activity**, **Economy Potential**, **Character Spotlight**.
 
-- **Play:** https://friend-smash.vercel.app (open inside your wallet app's browser on mobile)
+- **Play:** https://friend-smash.vercel.app — **read-only test**: paste an address holding a Rare Friend; nothing to connect or sign
 - **Stack:** Next.js 14 · Postgres (Neon; embedded PGlite for local dev) · **FriendSDK v0.1.2** (`wallet`, `owned`, `identity`, `sprites`) · viem
 
 > ⚠️ **All RF is SIMULATED.** No real tokens move, nothing is signed except a sign-in message. Balances are labelled "simulated" everywhere in the UI.

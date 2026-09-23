@@ -84,7 +84,7 @@ export async function POST(req: Request) {
     if ((held ?? 0) < need) {
       return NextResponse.json(
         {
-          error: `Locked: hold ${need.toLocaleString()} $RAREFRIENDS in your Friend's wallet to unlock (it holds ${(held ?? 0).toLocaleString()}).`,
+          error: `Locked — needs ${need.toLocaleString()} RF in your Friend's wallet.`,
           locked: true,
           needRf: need,
           heldRf: held,

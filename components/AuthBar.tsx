@@ -214,7 +214,7 @@ function AuthBarInner() {
     <>
       {showChip && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => (authenticated ? setOpen(true) : login())}
           aria-label={authenticated ? "Account" : "Sign in"}
           className="chunky"
           style={{
@@ -259,11 +259,10 @@ function AuthBarInner() {
             {!authenticated ? (
               <>
                 <div style={{ fontWeight: 800, fontSize: 24, marginBottom: 6 }}>
-                  Bring a Friend
+                  Pick your Friend
                 </div>
                 <div style={{ fontWeight: 600, fontSize: 13, opacity: 0.75 }}>
-                  Paste the address that holds your hardwired Rare Friend (read-only, nothing to sign) or
-                  connect the wallet itself. Your pieces become your Friends.
+                  Read-only test — paste an address, nothing to sign.
                 </div>
                 <button
                   className="chunky"
@@ -336,13 +335,13 @@ function AuthBarInner() {
                   <span className="num" style={{ fontSize: 18 }}>
                     {balance !== null ? formatRf(balance) : "—"} RF
                   </span>
-                  <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.6 }}>SIMULATED balance · no real tokens</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.6 }}>simulated</div>
                 </div>
 
                 {crew.length > 0 && (
                   <div style={{ marginTop: 14, textAlign: "left" }}>
                     <div style={{ fontWeight: 800, fontSize: 12, opacity: 0.6, letterSpacing: 1 }}>
-                      YOUR FRIENDS ARE THE PIECES
+                      YOUR PIECES
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
                       {crew.map((f) => (
@@ -350,22 +349,19 @@ function AuthBarInner() {
                           <FriendPortrait friendId={f.id} size={34} />
                           <div>W{f.weightClass ?? 1}</div>
                           <div style={{ opacity: 0.6 }}>
-                            {(f.weightClass ?? 1) > 1 ? `-${Math.round(15 * ((f.weightClass ?? 1) - 1))}% speed` : "normal"}
+                            {(f.weightClass ?? 1) > 1 ? `-${Math.round(15 * ((f.weightClass ?? 1) - 1))}%` : ""}
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div style={{ fontSize: 10.5, opacity: 0.65, marginTop: 4, lineHeight: 1.4 }}>
-                      Weight comes from each Friend&apos;s on-chain generation + activation tier — the inputs to its RF
-                      reward weight. Heavier Friends fall slower.
-                    </div>
+                    <div style={{ fontSize: 10.5, opacity: 0.65, marginTop: 4 }}>Heavier Friends fall slower.</div>
                   </div>
                 )}
 
                 {friendWallet && (
                   <div style={{ marginTop: 14, textAlign: "left" }}>
                     <div style={{ fontWeight: 800, fontSize: 12, opacity: 0.6, letterSpacing: 1 }}>
-                      FRIEND WALLET · ROBINHOOD CHAIN
+                      FRIEND WALLET
                     </div>
                     <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                       <code
@@ -391,26 +387,6 @@ function AuthBarInner() {
                     </div>
                   </div>
                 )}
-
-                <div
-                  style={{
-                    marginTop: 14,
-                    textAlign: "left",
-                    padding: "10px 12px",
-                    borderRadius: "var(--r-ctl)",
-                    background: "var(--surface-pink)",
-                    border: "2px dashed var(--pink)",
-                  }}
-                >
-                  <div style={{ fontWeight: 800, fontSize: 13 }}>How RF works here</div>
-                  <div style={{ fontWeight: 600, fontSize: 11.5, opacity: 0.8, marginTop: 4, lineHeight: 1.5 }}>
-                    Power-ups <b>unlock</b> by the real $RAREFRIENDS your Friend&apos;s wallet holds and{" "}
-                    <b>burn</b> simulated RF when bought. Ranked entries fill a <b>daily prize pool</b> paid to the
-                    top scores, with a slice burned. Balances belong to your Friend and move with the NFT. Everything
-                    is <b>simulated</b> for the vibeathon — at launch the same ledger settles in real $RAREFRIENDS
-                    to the Friend wallet above.
-                  </div>
-                </div>
 
                 <button className="chunky" style={panel.btn} onClick={() => setOpen(false)}>
                   BACK TO THE BOARD

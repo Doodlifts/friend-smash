@@ -16,6 +16,7 @@ import type { FriendWalletSession } from "@rarefriends/friendsdk/wallet";
 import { createFriendPublicClient } from "@rarefriends/friendsdk/wallet";
 import { readOwnedFriends, type OwnedFriend } from "@rarefriends/friendsdk/owned";
 import FriendPortrait from "./FriendPortrait";
+import { READ_ONLY_TEST } from "@/lib/rf/testMode";
 
 const CHAIN_ID = 4663;
 
@@ -62,7 +63,7 @@ export default function FriendPicker({
   const [signing, setSigning] = useState<string | null>(null);
   const [signError, setSignError] = useState("");
   // READ-ONLY mode: paste any address, list its Friends, play unverified.
-  const [mode, setMode] = useState<"wallet" | "address">(snap.status === "unavailable" ? "address" : "wallet");
+  const [mode, setMode] = useState<"wallet" | "address">(READ_ONLY_TEST || snap.status === "unavailable" ? "address" : "wallet");
   const [pasted, setPasted] = useState("");
   const [pastedDisc, setPastedDisc] = useState<Discovery>({ state: "idle" });
 
@@ -252,10 +253,7 @@ export default function FriendPicker({
     const d = pastedDisc;
     body = (
       <>
-        <p>
-          Paste the wallet address that holds your hardwired Friend. <b>Read-only:</b> nothing to connect or sign —
-          your wallet is never touched.
-        </p>
+        <p>Paste the address holding your Rare Friends.</p>
         <div className="rfp-row">
           <input
             className="rfp-input"
@@ -284,16 +282,13 @@ export default function FriendPicker({
                 <FriendPortrait friendId={f.id} size={72} animate />
                 <span>#{f.id.toString()}</span>
                 <small>gen {f.generation}</small>
-                {signing === f.id.toString() && <em>Loading…</em>}
+                {signing === f.id.toString() && <em>…</em>}
               </button>
             ))}
           </div>
         )}
         {signError && <p className="rfp-err">{signError}</p>}
-        <p className="rfp-note">
-          Read-only Friends play with a separate simulated RF balance and are marked 👁 on leaderboards. Sign in with
-          the wallet to play as the verified Friend.
-        </p>
+        <p className="rfp-note">Nothing to connect or sign. RF is simulated.</p>
       </>
     );
   }
@@ -302,17 +297,18 @@ export default function FriendPicker({
     <div className="rfp-ov" role="dialog" aria-modal="true" aria-label="Choose your Rare Friend" onClick={onClose}>
       <div className="rfp-card-panel" onClick={(e) => e.stopPropagation()}>
         <div className="rfp-head">
-          <b>PLAY AS YOUR FRIEND</b>
+          <b>PICK YOUR FRIEND</b>
           <button className="rfp-x" aria-label="Close" onClick={onClose}>×</button>
         </div>
-        <div className="rfp-tabs" role="tablist">
+        {READ_ONLY_TEST && <div className="rfp-test">READ-ONLY TEST</div>}
+        {!READ_ONLY_TEST && <div className="rfp-tabs" role="tablist">
           <button role="tab" aria-selected={mode === "address"} className={mode === "address" ? "on" : ""} onClick={() => setMode("address")}>
             PASTE ADDRESS
           </button>
           <button role="tab" aria-selected={mode === "wallet"} className={mode === "wallet" ? "on" : ""} onClick={() => setMode("wallet")}>
             CONNECT WALLET
           </button>
-        </div>
+        </div>}
         {body}
         {mode === "wallet" && snap.account && (
           <div className="rfp-foot">

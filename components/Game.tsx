@@ -134,7 +134,7 @@ export default function Game() {
                 dangerouslySetInnerHTML={{ __html: '<rect x="2" y="0" width="1" height="1"/><rect x="9" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="2" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="8" y="1" width="1" height="1"/><rect x="9" y="1" width="1" height="1"/><rect x="10" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="1" y="2" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="5" y="2" width="1" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="7" y="2" width="1" height="1"/><rect x="8" y="2" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="11" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="4" y="3" width="1" height="1"/><rect x="5" y="3" width="1" height="1"/><rect x="6" y="3" width="1" height="1"/><rect x="7" y="3" width="1" height="1"/><rect x="10" y="3" width="1" height="1"/><rect x="11" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="1" y="4" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="5" y="4" width="1" height="1"/><rect x="6" y="4" width="1" height="1"/><rect x="7" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="11" y="4" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="2" y="5" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/><rect x="4" y="5" width="1" height="1"/><rect x="5" y="5" width="1" height="1"/><rect x="6" y="5" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="9" y="7" width="1" height="1"/>' }} />
               RARE FRIENDS
             </span>
-            <span className="rfHeader-app">friend smash</span>
+            <span className="rfHeader-app rfHeader-test">read-only test</span>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="menuLogo" id="menuLogo" alt="Friend Smash" />
@@ -151,8 +151,7 @@ export default function Game() {
           <button className="bigbtn" id="btnStart">SMASH!</button>
           <button className="bigbtn alt" id="btnVersus">VERSUS</button>
           <div className="freeplay">
-            <b>Free to play — no wallet needed.</b>
-            <br />Pick your Rare Friend (paste your address — read-only) and your pieces become your Friends. Ranked pools use simulated $RAREFRIENDS.
+            Paste your address — your Friends become the pieces.
           </div>
           <button className="worldchip" id="btnWorldOpen">Friends in your world</button>
         </div>
@@ -161,17 +160,16 @@ export default function Game() {
       {/* Camera-world opt-in — the branded moment BEFORE the device prompts */}
       <div className="overlay hidden" id="worldOv">
         <div className="card">
-          <div className="bigtitle" style={{ fontSize: "22px" }}>BRING YOUR FRIENDS<br />INTO YOUR WORLD?</div>
+          <div className="bigtitle" style={{ fontSize: "22px" }}>FRIENDS IN<br />YOUR ROOM?</div>
           {/* the engine swaps this line for returning opt-ins (resume mode);
               keep the default text in sync with WORLD_SUB_FIRST in engine.ts */}
           <div className="sub" id="worldSub">
-            YES asks for two things: your camera — your room becomes the dreamy
-            backdrop — and motion, so tilting nudges the scene.
+            Your camera becomes the backdrop.
           </div>
-          <button className="bigbtn" id="btnWorldYes">YES, LET THEM IN</button>
+          <button className="bigbtn" id="btnWorldYes">YES</button>
           <button className="bigbtn ghost" id="btnWorldNo">NOT NOW</button>
           <div className="worldnote" id="worldNote">
-            All on your device — nothing is recorded or uploaded, ever.
+            Stays on your device.
           </div>
         </div>
       </div>

@@ -766,3 +766,7 @@ body{font-weight:400}
 .rfHeader-mark{width:22px;height:15px;display:block;color:var(--ink)}
 .rfHeader-app{font-family:var(--font);font-size:10.5px;color:var(--muted,#6b6b6b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:360px){.rfHeader-app{display:none}}
+.rfp-test,.rfHeader-test{font-family:var(--font);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+.rfp-test{display:inline-block;margin:2px 0 10px;padding:3px 8px;border:1px dashed var(--ink)}
+.rfHeader-test::before{content:"";display:inline-block;width:7px;height:7px;background:var(--signal);margin-right:6px;vertical-align:0;outline:1px solid var(--ink)}
+.rfHeader-test{color:var(--ink) !important}

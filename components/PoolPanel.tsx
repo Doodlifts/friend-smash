@@ -128,7 +128,7 @@ export default function PoolPanel() {
             <b>{formatRf(pool.pot)} RF</b> POOL
           </span>
           <span className="rfpool-meta">
-            {pool.entries} entries · closes {left} · 🔥 {formatRf(pool.totals.burned)} burned
+            {pool.entries} in · {left} · 🔥 {formatRf(pool.totals.burned)}
           </span>
         </button>
         <button
@@ -153,19 +153,16 @@ export default function PoolPanel() {
             <div className="rfpool-big">
               {formatRf(pool.pot)} <span>RF</span>
             </div>
-            <p className="rfp-note">
-              SIMULATED — no real tokens move. Closes in {left} (00:00 UTC); pays the top 10 two hours later.
-            </p>
+            <p className="rfp-note">Simulated · closes in {left}</p>
 
             {pool.me && (
               <p className="rfpool-me">
-                You: {pool.me.best != null ? `best ${pool.me.best.toLocaleString()} · #${pool.me.rank}` : "no ranked score yet"} ·{" "}
-                {pool.me.entries} entr{pool.me.entries === 1 ? "y" : "ies"} today
+                You: {pool.me.best != null ? `#${pool.me.rank} · ${pool.me.best.toLocaleString()}` : "no score yet"}
               </p>
             )}
 
             <ol className="rfpool-list">
-              {pool.standings.length === 0 && <li className="rfp-note">No ranked scores yet — first place is wide open.</li>}
+              {pool.standings.length === 0 && <li className="rfp-note">No scores yet.</li>}
               {pool.standings.map((s) => (
                 <li key={s.rank} className={s.you ? "you" : ""}>
                   <span className="r">#{s.rank}</span>
@@ -179,7 +176,7 @@ export default function PoolPanel() {
 
             {pool.yesterday && (
               <>
-                <div className="rfpool-h">YESTERDAY&apos;S WINNERS</div>
+                <div className="rfpool-h">YESTERDAY</div>
                 <ol className="rfpool-list small">
                   {pool.yesterday.winners.slice(0, 3).map((w) => (
                     <li key={w.rank} className={w.you ? "you" : ""}>
@@ -193,27 +190,17 @@ export default function PoolPanel() {
               </>
             )}
 
-            <div className="rfpool-h">HOW IT WORKS</div>
             <ul className="rfpool-rules">
-              <li>
-                Each ranked run costs <b>{formatRf(pool.entryFee)} RF</b>: {formatRf(pool.poolShare)} to the pool,{" "}
-                <b>{formatRf(pool.burnPerEntry)} burned</b>.
-              </li>
-              <li>Best ranked score per Friend counts. Every run is server-replayed (anti-cheat).</li>
-              <li>Ranked = equal loadout: no power-ups. Top 10 split the pot, top-heavy.</li>
-              <li>Power-ups (practice/versus) burn 100%. Versus burns 5% of each pot.</li>
+              <li>{formatRf(pool.entryFee)} RF per ranked run · {formatRf(pool.burnPerEntry)} burned</li>
+              <li>Top 10 split the pot · no power-ups</li>
             </ul>
-            <p className="rfp-note">
-              All-time: {formatRf(pool.totals.burned)} RF burned · {formatRf(pool.totals.prizesPaid)} RF paid to players ·{" "}
-              {formatRf(pool.totals.faucetIssued)} RF from the demo faucet
-            </p>
             {authenticated ? (
               <button className={`rfp-btn ${ranked ? "" : "rfp-primary"}`} onClick={() => setRankedPref(!ranked)}>
-                {ranked ? "Switch to practice (free)" : `Play ranked · ${formatRf(pool.entryFee)} RF per run`}
+                {ranked ? "practice" : `ranked · ${formatRf(pool.entryFee)} rf`}
               </button>
             ) : (
               <button className="rfp-btn rfp-primary" onClick={() => { setOpen(false); login(); }}>
-                Connect a Rare Friend to enter
+                pick your friend
               </button>
             )}
           </div>

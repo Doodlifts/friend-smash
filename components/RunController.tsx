@@ -69,10 +69,10 @@ function RunControllerInner() {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || "Ranked entry failed.");
-        setNotice(`RANKED · entry paid (simulated) · balance ${formatRf(data.balance)} RF`);
+        setNotice(`ranked · ${formatRf(data.balance)} rf left`);
       } catch (e) {
         window.__RF_RUN_RANKED = false;
-        setNotice(`${e instanceof Error ? e.message : "Ranked entry failed."} Playing as practice.`);
+        setNotice(`${e instanceof Error ? e.message : "Ranked entry failed."} Practice run.`);
       } finally {
         window.dispatchEvent(new CustomEvent("rfsmash:me-changed"));
         window.setTimeout(() => setNotice(null), 3500);

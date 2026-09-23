@@ -303,60 +303,73 @@ export function startEngine(): () => void {
   /* ============================================================ MUSIC
      Original pastel chiptune loop, scheduled with WebAudio lookahead.
      Notes are semitones relative to C5; null = rest. 8 bars of 8ths.   */
+  /* Music — "Friend Loop": a mellow 1-bit loop in A minor (i–VI–III–VII:
+     Am, F, C, G), 16th-note square arpeggios through a lowpass, a sparse
+     pentatonic lead, triangle bass, soft kick + hat. 64 steps (4 bars).
+     Tempo rises gently with level. Original composition. */
   const Music = {
-    on:true, playing:false, timer:null, nextT:0, step:0, gain:null,
-    // lead (triangle) — bouncy major-pentatonic doodle
+    on:true, playing:false, timer:null, nextT:0, step:0, gain:null, lp:null,
+    // chord tones (semitones from A3) per bar
+    chords:[[0,3,7],[-4,0,3],[3,7,10],[-2,2,5]],
+    // arp shape over 16 sixteenths: index into [root, 3rd, 5th, octave-root]
+    arp:[0,1,2,3, 2,1,0,1, 2,3,2,1, 0,2,1,3],
+    // lead: A-minor pentatonic, semitones from A4; null = rest
     lead:[
-       0, 4, 7, 4,   9, 7, 4, null,   2, 4, 7, 4,   2, null, 0, null,
-       0, 4, 7, 4,   9, 7,12, null,  11, 9, 7, 4,   7, null, null, null,
-       9, 9, 7, 4,   9,12, 9, 7,     5, 5, 4, 2,    5, 9, 7, 4,
-       0, 4, 7,12,   9, null, 7, 4,  2, null, 4, null, 0, null, null, null,
-    ],
-    // bass (sine) — quarter notes, semitones relative to C3
-    bass:[
-       0,null, 7,null,  9,null, 7,null,  5,null, 7,null,  0,null, 7,null,
-       0,null, 7,null,  9,null, 7,null,  5,null, 7,null,  0,null, 4,null,
-       9,null, 4,null,  9,null, 4,null,  5,null, 0,null,  5,null, 7,null,
-       0,null, 7,null,  9,null, 4,null,  2,null, 7,null,  0,null, 0,null,
+      12,null,null,null, 10,null,7,null,   null,null,null,null, 5,null,null,null,
+       7,null,null,null, 5,null,3,null,    null,null,null,null, 0,null,null,null,
+       3,null,null,null, 7,null,10,null,   12,null,null,null, 10,null,null,null,
+       7,null,null,null, 5,null,null,null,  2,null,null,null, null,null,null,null,
     ],
     f(n, base){ return base*Math.pow(2, n/12); },
-    note(freq, t, dur, type, vol){
+    note(freq, t, dur, type, vol, dest){
       const c = Sfx.ctx, o = c.createOscillator(), g = c.createGain();
       o.type = type; o.frequency.value = freq;
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(vol, t+.012);
-      g.gain.setTargetAtTime(0, t+dur*.7, .04);
-      o.connect(g).connect(this.gain); o.start(t); o.stop(t+dur+.15);
+      g.gain.linearRampToValueAtTime(vol, t+.008);
+      g.gain.setTargetAtTime(0, t+dur*.55, .05);
+      o.connect(g).connect(dest || this.gain); o.start(t); o.stop(t+dur+.2);
     },
-    hat(t){
-      const c = Sfx.ctx, n = Math.floor(c.sampleRate*.03);
+    kick(t){
+      const c = Sfx.ctx, o = c.createOscillator(), g = c.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(42, t+.12);
+      g.gain.setValueAtTime(.16, t); g.gain.exponentialRampToValueAtTime(.001, t+.16);
+      o.connect(g).connect(this.gain); o.start(t); o.stop(t+.2);
+    },
+    hat(t, vol){
+      const c = Sfx.ctx, n = Math.floor(c.sampleRate*.02);
       const buf = c.createBuffer(1,n,c.sampleRate), d = buf.getChannelData(0);
       for (let i=0;i<n;i++) d[i] = (Math.random()*2-1)*(1-i/n);
       const s = c.createBufferSource(); s.buffer = buf;
-      const f = c.createBiquadFilter(); f.type="highpass"; f.frequency.value=6000;
-      const g = c.createGain(); g.gain.value=.05;
+      const f = c.createBiquadFilter(); f.type="highpass"; f.frequency.value=7000;
+      const g = c.createGain(); g.gain.value=vol;
       s.connect(f).connect(g).connect(this.gain); s.start(t);
     },
-    stepDur(){ return 60/(108 + Math.min(36,(G.level-1)*4))/2; }, // 8ths; brightens with level
+    stepDur(){ return 60/(92 + Math.min(28,(G.level-1)*3))/4; }, // 16ths
     schedule(){
       if (!this.playing || !Sfx.ctx) return;
       const c = Sfx.ctx;
-      // Clock-jump guard: if the context was suspended (frozen currentTime)
-      // and just resumed, don't burst-schedule the backlog — skip forward.
       if (this.nextT < c.currentTime) this.nextT = c.currentTime + .06;
       while (this.nextT < c.currentTime + .3){
-        const i = this.step % this.lead.length, sd = this.stepDur();
-        const L = this.lead[i], B = this.bass[i];
-        if (L!==null && L!==undefined) this.note(this.f(L,523.25), this.nextT, sd*1.7, "triangle", .085);
-        if (B!==null && B!==undefined) this.note(this.f(B,130.81), this.nextT, sd*3.4, "sine", .11);
-        if (i%4===2) this.hat(this.nextT);
+        const i = this.step % 64, sd = this.stepDur(), bar = (i/16)|0, k = i%16;
+        const ch = this.chords[bar];
+        const tones = [ch[0], ch[1], ch[2], ch[0]+12];
+        this.note(this.f(tones[this.arp[k]], 220), this.nextT, sd*1.4, "square", .028, this.lp);
+        const L = this.lead[i];
+        if (L !== null && L !== undefined) this.note(this.f(L, 440), this.nextT, sd*5, "triangle", .07);
+        if (k === 0 || k === 8) this.note(this.f(ch[0], 55), this.nextT, sd*7, "triangle", .13);
+        if (k === 0 || k === 10) this.kick(this.nextT);
+        if (k % 4 === 2) this.hat(this.nextT, k === 14 ? .035 : .02);
         this.nextT += sd; this.step++;
       }
     },
     start(){
       Sfx.init();
       if (!Sfx.ctx || this.playing || !this.on || !Sfx.on) return;
-      if (!this.gain){ this.gain = Sfx.ctx.createGain(); this.gain.gain.value = .5; this.gain.connect(Sfx.ctx.destination); }
+      if (!this.gain){
+        this.gain = Sfx.ctx.createGain(); this.gain.gain.value = .5; this.gain.connect(Sfx.ctx.destination);
+        this.lp = Sfx.ctx.createBiquadFilter(); this.lp.type = "lowpass"; this.lp.frequency.value = 1400; this.lp.Q.value = .7;
+        this.lp.connect(this.gain);
+      }
       this.playing = true; this.step = 0;
       this.nextT = Sfx.ctx.currentTime + .08;
       this.timer = setInterval(()=>this.schedule(), 80);
@@ -2301,7 +2314,7 @@ export function startEngine(): () => void {
     // so this fires at most once ever.
     try{
       const isTouch = window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
-      if (!pref("doopieWorld") && isTouch && camSupported()){
+      if (false && !pref("doopieWorld") && isTouch && camSupported()){ // camera world is opt-in from the menu chip only
         worldPendingFn = startGame;
         showWorldAsk("first");
         return;
@@ -2445,8 +2458,8 @@ export function startEngine(): () => void {
   let worldMode = "first";
   // Short, but says exactly what YES will ask for and why — the two device
   // pop-ups (camera + motion) land right after this card, so no surprises.
-  const WORLD_SUB_FIRST = "YES asks for two things: your camera — your room becomes the dreamy backdrop — and motion, so tilting nudges the board.";
-  const WORLD_SUB_RESUME = "Welcome back! Your browser forgets between visits — YES re-asks for camera + motion and your room is back.";
+  const WORLD_SUB_FIRST = "Your camera becomes the backdrop.";
+  const WORLD_SUB_RESUME = "Turn the camera backdrop back on?";
   const showWorldAsk = (mode)=>{
     worldMode = mode;
     const sub = document.getElementById("worldSub");
@@ -3579,7 +3592,7 @@ export function startEngine(): () => void {
     // will re-prompt, the card fronts it (never a bare sheet over the lobby).
     try{
       const isTouch = window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
-      if (!pref("doopieWorld") && isTouch && camSupported()){
+      if (false && !pref("doopieWorld") && isTouch && camSupported()){ // camera world is opt-in from the menu chip only
         vsEl("vsOv").classList.add("hidden"); // the card renders under vsOv otherwise
         worldPendingFn = doVsQueue;
         showWorldAsk("first");

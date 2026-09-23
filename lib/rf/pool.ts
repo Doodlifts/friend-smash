@@ -85,7 +85,7 @@ export async function enterPool(
     });
   } catch (e) {
     if (e instanceof InsufficientFundsError) {
-      return { ok: false, status: 402, error: `Ranked entry is ${POOL_ENTRY} RF (simulated) — not enough RF.` };
+      return { ok: false, status: 402, error: `Need ${POOL_ENTRY} RF.` };
     }
     throw e;
   }

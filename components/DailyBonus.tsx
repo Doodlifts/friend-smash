@@ -54,7 +54,7 @@ function DailyBonusInner() {
     <div id="dailyToast" className={leaving ? "leaving" : undefined} role="status" aria-live="polite">
       <span className="amt num">+{formatRf(toast.amount)} RF</span>
       <span className="strk">
-        {toast.streak > 1 ? `Day ${toast.streak} streak! (simulated RF)` : "Daily claim — simulated RF, no real tokens."}
+        {toast.streak > 1 ? `Day ${toast.streak} streak` : "Daily RF (simulated)"}
       </span>
     </div>
   );

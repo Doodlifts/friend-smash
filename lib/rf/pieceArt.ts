@@ -45,7 +45,7 @@ export const PIECE_STYLE: Record<PieceType, { color: string; family: number; nam
   S: { color: "#B9D984", family: 3, name: "Cellular" },
   Z: { color: "#ED927E", family: 0, name: "Skeleton" },
   J: { color: "#7DB4DB", family: 5, name: "Hoverer" },
-  L: { color: "#B8B8B8", family: 2, name: "Family" },
+  L: { color: "#F4A9C8", family: 2, name: "Family" },
 };
 
 type Pack = { families: { id: number; name: string; portraits: string[] }[] };
@@ -114,35 +114,23 @@ export function spriteFor(t: PieceType): SpriteRows {
 }
 
 /**
- * Draw one Friend into a 96×96 cell in the Rare Friends house look: the
- * canonical black 1-bit sprite with a 1-pixel white halo (FriendSDK reference
- * style), over a faint wash of the piece's palette colour so the seven shapes
- * stay readable at speed. 6px pixels, edge to edge.
- * "blood" = flash variant for pieces in a clearing row: inverted (ink cell,
- * white Friend).
+ * One Friend in a 96×96 cell: solid palette block, black 1-bit sprite
+ * (6px pixels, edge to edge). "blood" = flash variant for pieces in a
+ * clearing row: ink block, white Friend.
  */
 export function drawSpriteCell(c: CanvasRenderingContext2D, x: number, y: number, rows: SpriteRows, color: string, flash: boolean) {
-  const px = 6;
-  const on = (r: number, q: number) => r >= 0 && r < 16 && q >= 0 && q < 16 && rows[r][q] === "#";
-  // tint wash (inset 3px so neighbouring cells read as separate Friends)
-  c.save();
-  c.globalAlpha = flash ? 1 : 0.42;
   c.fillStyle = flash ? INK : color;
-  c.fillRect(x + 3, y + 3, 90, 90);
-  c.restore();
-  // 1-px halo
-  c.fillStyle = flash ? INK : "#ffffff";
-  for (let r = -1; r <= 16; r++)
-    for (let q = -1; q <= 16; q++) {
-      if (on(r, q)) continue;
-      if (on(r - 1, q) || on(r + 1, q) || on(r, q - 1) || on(r, q + 1) || on(r - 1, q - 1) || on(r + 1, q + 1) || on(r - 1, q + 1) || on(r + 1, q - 1))
-        if (r >= 0 && r < 16 && q >= 0 && q < 16) c.fillRect(x + q * px, y + r * px, px, px);
-    }
+  c.fillRect(x, y, ART_CELL, ART_CELL);
   c.fillStyle = flash ? "#ffffff" : INK;
-  for (let r = 0; r < 16; r++) for (let q = 0; q < 16; q++) if (on(r, q)) c.fillRect(x + q * px, y + r * px, px, px);
+  for (let r = 0; r < 16; r++) for (let q = 0; q < 16; q++) if (rows[r][q] === "#") c.fillRect(x + q * 6, y + r * 6, 6, 6);
 }
 
-/** A piece canvas for an explicit cell layout (used for every rotation so sprites stay upright). */
+/**
+ * A piece canvas for an explicit cell layout (every rotation is drawn this way
+ * so sprites stay upright). Readability: the piece is ONE solid shape — cells
+ * touch, a faint seam separates Friends, and a thick ink outline traces only
+ * the piece's outer silhouette.
+ */
 export function pieceCanvas(t: PieceType, variant: "clean" | "blood", cells: number[][], w: number, h: number): HTMLCanvasElement {
   const cv = document.createElement("canvas");
   cv.width = w * ART_CELL;
@@ -150,7 +138,24 @@ export function pieceCanvas(t: PieceType, variant: "clean" | "blood", cells: num
   const c = cv.getContext("2d")!;
   c.imageSmoothingEnabled = false;
   const rows = spriteFor(t);
-  for (const [cx, cy] of cells) drawSpriteCell(c, cx * ART_CELL, cy * ART_CELL, rows, PIECE_STYLE[t].color, variant === "blood");
+  const flash = variant === "blood";
+  const has = new Set(cells.map(([x, y]) => `${x},${y}`));
+  for (const [cx, cy] of cells) drawSpriteCell(c, cx * ART_CELL, cy * ART_CELL, rows, PIECE_STYLE[t].color, flash);
+  const S = ART_CELL;
+  const edge = 8; // outline thickness (art px)
+  for (const [cx, cy] of cells) {
+    const x = cx * S, y = cy * S;
+    // seams between this piece's own cells
+    c.fillStyle = flash ? "rgba(255,255,255,.18)" : "rgba(17,17,17,.14)";
+    if (has.has(`${cx + 1},${cy}`)) c.fillRect(x + S - 2, y, 2, S);
+    if (has.has(`${cx},${cy + 1}`)) c.fillRect(x, y + S - 2, S, 2);
+    // outer silhouette
+    c.fillStyle = INK;
+    if (!has.has(`${cx},${cy - 1}`)) c.fillRect(x, y, S, edge);
+    if (!has.has(`${cx},${cy + 1}`)) c.fillRect(x, y + S - edge, S, edge);
+    if (!has.has(`${cx - 1},${cy}`)) c.fillRect(x, y, edge, S);
+    if (!has.has(`${cx + 1},${cy}`)) c.fillRect(x + S - edge, y, edge, S);
+  }
   return cv;
 }
 

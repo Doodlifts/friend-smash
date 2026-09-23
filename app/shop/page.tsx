@@ -27,10 +27,9 @@ export default function ShopPage() {
           <div className="page-title">POWER-UPS</div>
           <span style={{ width: 40 }} />
         </div>
-        <div style={mockBadge}>SIMULATED $RAREFRIENDS — no real tokens move</div>
+        <div style={mockBadge}>read-only test · simulated rf</div>
         <div style={modelNote}>
-          Unlocked by the REAL $RAREFRIENDS your Friend&apos;s own wallet holds (read-only, never moved). Bought
-          with simulated RF — 100% of every purchase is burned. Usable in practice and versus, never in ranked.
+          Unlock by holding $RAREFRIENDS in your Friend&apos;s wallet. Purchases burn.
         </div>
         <ShopInner />
         <Link href="/" className="page-cta alt chunky" style={{ marginTop: 18 }}>
@@ -106,9 +105,9 @@ function ShopInner() {
   if (!authenticated) {
     return (
       <>
-        <div className="page-note">Sign in to spend RF on power-ups.</div>
+        <div className="page-note">Pick your Friend first.</div>
         <button className="page-cta chunky" onClick={() => login()}>
-          SIGN IN
+          PICK YOUR FRIEND
         </button>
         <CatalogList catalog={catalog} inventory={{}} balance={null} busy={null} onBuy={() => {}} disabled />
       </>
@@ -118,10 +117,10 @@ function ShopInner() {
   return (
     <>
       <div className="num" style={balanceStyle}>
-        {balance !== null ? balance.toLocaleString() : "—"} <span style={{ fontSize: 12 }}>RF (simulated)</span>
+        {balance !== null ? balance.toLocaleString() : "—"} <span style={{ fontSize: 12 }}>RF</span>
       </div>
       <div style={modelNote}>
-        Friend wallet holds <b className="num">{heldRf !== null ? heldRf.toLocaleString() : "—"}</b> real $RAREFRIENDS
+        Friend wallet: <b className="num">{heldRf !== null ? heldRf.toLocaleString() : "—"}</b> RF
       </div>
       {error && <div className="page-note" style={{ color: "var(--pink-deep)", padding: "6px 8px" }}>{error}</div>}
       <CatalogList catalog={catalog} inventory={inventory} balance={balance} busy={busy} onBuy={buy} />
@@ -159,7 +158,7 @@ function CatalogList({
               <div style={itemDesc}>{p.description}</div>
               {(p.unlockRf ?? 0) > 0 && (
                 <div style={{ ...itemDesc, opacity: 1, marginTop: 2 }}>
-                  {locked ? "🔒" : "🔓"} hold {(p.unlockRf ?? 0).toLocaleString()} $RAREFRIENDS in your Friend&apos;s wallet
+                  {locked ? "🔒" : "🔓"} {(p.unlockRf ?? 0).toLocaleString()} RF held
                 </div>
               )}
             </div>
