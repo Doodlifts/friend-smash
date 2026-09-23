@@ -1,0 +1,709 @@
+/* app/globals.css — Friend Smash (Rare Friends Vibeathon).
+   Token-driven: 1-bit ink, signal green #CCFF00 for primary actions, the Rare
+   Friends pastel palette for secondary accents. Silkscreen for display text,
+   Space Mono for body. Small radii + hard offset shadows = crisp pixel look.
+   Legacy token NAMES (--pink*, --purple*, --grad-pink…) are kept so inline
+   styles across components re-theme automatically. */
+
+:root{
+  --ink:#111;
+  --paper:#eee;
+  --panel:rgba(255,255,255,.88);
+  --panel-solid:#ffffff;
+  /* Rare Friends palette */
+  --signal:#CCFF00;
+  --signal-hi:#e2ff66;
+  --meadow:#B9D984;
+  --pond:#7DB4DB;
+  --sun:#F2CE68;
+  --coral:#ED927E;
+  --lilac:#B3A0D8;
+  /* primary family (legacy name "pink"): --pink is the base fill, --pink-hi the
+     gradient top, --pink-deep the readable text-on-white accent. */
+  --pink:var(--signal);
+  --pink-hi:var(--signal-hi);
+  --pink-deep:#4a6600;
+  /* secondary family (legacy name "purple") = lilac */
+  --purple:var(--lilac);
+  --purple-hi:#d3c7ec;
+  --blue:var(--pond);
+  /* neutral/tinted surfaces */
+  --surface:#f6f6f6;
+  --surface-purple:#f1edf9;
+  --surface-pink:#f6ffd6;
+  --surface-blue:#e3eff8;
+  --cream:#eaff99;
+  /* the two signature button gradients (single source of truth) */
+  --grad-pink:linear-gradient(180deg,var(--pink-hi),var(--pink));
+  --grad-purple:linear-gradient(180deg,var(--purple-hi),var(--purple));
+  /* elevation scale: hard, blur-free pixel offsets */
+  --sh-ctl:0 3px 0 var(--ink);
+  --sh-cta:0 4px 0 var(--ink);
+  --sh-card:6px 6px 0 var(--ink);
+  /* radius scale (pixel look) */
+  --r-row:4px; --r-ctl:6px; --r-cta:6px; --r-card:8px;
+  /* 1-bit dither used by the page + splash backdrops */
+  --dither:conic-gradient(rgba(17,17,17,.06) 25%, transparent 0 50%, rgba(17,17,17,.06) 0 75%, transparent 0);
+  /* motion: one pop curve + a small duration scale */
+  --ease-pop:cubic-bezier(.2,1.7,.4,1);
+  --ease-out:cubic-bezier(.2,.7,.3,1);
+  --t-fast:.16s; --t-in:.2s; --t-pop:.4s;
+  --font:'Space Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-display:'Silkscreen', 'Space Mono', ui-monospace, monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* Form controls inherit the brand font instead of the UA default — the reset
+   above only handled box-model, so every <button>/<input> used to fall back to
+   system-ui unless it remembered fontFamily inline. */
+button,input,select,textarea{font-family:inherit}
+/* Tabular figures: stop scores/ranks/counts from jittering + misaligning as
+   digits change (belt-and-braces; Space Mono is already monospaced). */
+.num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+/* Shared chunky press/hover for inline-styled page buttons + chips, so the
+   satisfying in-game squish carries across every screen. box-shadow uses
+   !important to override each element's inline shadow on press. */
+.chunky{transition:transform var(--t-fast) ease, box-shadow var(--t-fast) ease}
+@media (hover:hover){ .chunky:hover{transform:translateY(-1px)} }
+.chunky:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink) !important}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{
+  font-family:var(--font);color:var(--ink);
+  background-color:var(--paper);background-image:var(--dither);background-size:4px 4px;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+  position:fixed;inset:0;
+}
+#bg{position:fixed;inset:0;z-index:0}
+#bg svg{width:100%;height:100%;display:block}
+/* ---- camera world: blurred camera passthrough (opt-in) ----
+   The video sits UNDER #bg (same z, earlier in the DOM); when live, #bg
+   drops to a translucent wash so the room shows through dreamily.
+   scale(1.12) hides the blur's edge vignette. */
+#camBg{
+  position:fixed;inset:0;z-index:0;width:100%;height:100%;
+  object-fit:cover;display:none;
+  filter:blur(10px) saturate(.95) brightness(1.03);
+  transform:scale(1.08);
+}
+#camBg.on{display:block}
+#bg{transition:opacity .5s ease}
+#bg.washed{opacity:.42}
+.worldchip{
+  margin-top:10px;font-family:var(--font-display);font-weight:400;font-size:11px;
+  color:var(--ink);background:var(--surface-blue);border:2px solid var(--ink);
+  border-radius:var(--r-ctl);padding:7px 14px;box-shadow:0 2px 0 var(--ink);cursor:pointer;
+}
+.worldchip.hidden{display:none}
+.worldnote{font-size:11px;font-weight:600;opacity:.55;margin-top:10px;line-height:1.5}
+.togglebtn{font-size:14px}
+
+/* ---- VERSUS ---- */
+.vsWagerRow{display:flex;gap:8px;justify-content:center;margin:12px 0 6px}
+.vschip{
+  font-family:var(--font);font-weight:800;font-size:15px;color:var(--ink);
+  background:var(--panel-solid);border:2.5px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:var(--sh-ctl);padding:8px 14px;cursor:pointer;
+}
+.vschip.sel{background:var(--grad-pink);color:var(--ink)}
+.vsBalance{font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;min-height:16px}
+.vsStatus{
+  font-weight:800;font-size:15px;margin:10px 0;letter-spacing:.5px;
+  animation:vsPulse 1.2s ease-in-out infinite;
+}
+.vsStatus.hidden{display:none}
+@keyframes vsPulse{0%,100%{opacity:.45}50%{opacity:1}}
+#vsBar{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin:2px 10px 4px;padding:7px 14px;
+  background:var(--panel-solid);border:3px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:var(--sh-ctl);font-family:var(--font);font-weight:800;font-size:17px;
+}
+#vsBar.hidden{display:none}
+.vsSide{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36%}
+#vsOpp{text-align:right;color:var(--pink-deep)}
+.vsMidCol{display:flex;flex-direction:column;align-items:center;line-height:1.1}
+#vsClock{font-size:21px;-webkit-text-stroke:.5px var(--ink);paint-order:stroke fill}
+#vsClock.vsUrgent{color:#c9402a;animation:vsPulse .5s ease-in-out infinite}
+#vsPips{font-size:13px;letter-spacing:2px;opacity:.75}
+/* splash typography — big, chunky, on-brand (tester: fonts were too small) */
+.vsScore{
+  font-family:var(--font-display);font-size:26px;font-weight:700;margin:8px 0 2px;color:var(--ink);
+  text-shadow:3px 3px 0 var(--signal);letter-spacing:.5px;
+}
+.vsScore:empty{display:none}
+.vsSub{font-size:16px;font-weight:700;line-height:1.45}
+.vsSub:empty{display:none}
+.vsTally{font-size:32px;letter-spacing:5px;margin:10px 0;font-weight:800}
+.vsCount{font-family:var(--font-display);font-size:60px;font-weight:700;min-height:70px;color:var(--signal);
+  -webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:4px 4px 0 var(--ink)}
+.vsCount:empty{display:none}
+#btnVsDone.hidden,#btnVsFind.hidden{display:none}
+.vsStatus{font-size:16px}
+
+/* ---- TURF WAR ---- */
+.vsModeRow{display:flex;gap:10px;justify-content:center;margin:12px 0 4px}
+.vsmode{
+  flex:1;max-width:190px;display:flex;flex-direction:column;gap:3px;align-items:center;
+  font-family:var(--font);color:var(--ink);background:var(--panel-solid);
+  border:3px solid var(--ink);border-radius:var(--r-ctl);box-shadow:var(--sh-ctl);
+  padding:10px 8px;cursor:pointer;
+}
+.vsmode.sel{background:var(--grad-purple);color:var(--ink)}
+.vsmode-name{font-weight:800;font-size:15px}
+#turfOv{align-items:stretch;justify-content:flex-start;padding:0}
+.turfWrap{
+  display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;
+  padding:calc(env(safe-area-inset-top,0px) + 54px) 10px calc(env(safe-area-inset-bottom,0px) + 10px);
+}
+.turfTop{
+  display:flex;align-items:center;gap:10px;width:100%;max-width:440px;justify-content:space-between;
+  font-family:var(--font);font-weight:800;
+}
+.turfTag{
+  font-size:15px;padding:5px 12px;border:2.5px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:var(--sh-ctl);color:var(--ink);max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.turfPink{background:var(--signal)}
+.turfBlue{background:var(--pond)}
+.turfMid{display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.turfTally{font-size:22px;font-weight:800}
+.turfGameN{font-size:11px;font-weight:800;opacity:.65}
+.turfFlag{
+  background:var(--panel-solid);border:2.5px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:var(--sh-ctl);padding:4px 9px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:var(--font);font-weight:800;font-size:12px;letter-spacing:.4px;color:var(--ink);
+}
+.turfBanner{
+  font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--ink);letter-spacing:.5px;
+  padding:6px 20px;border:3px solid var(--ink);border-radius:var(--r-ctl);box-shadow:var(--sh-ctl);
+  background:var(--signal);
+}
+.turfBanner.theirs{background:var(--pond);animation:vsPulse 1.4s ease-in-out infinite}
+#turfCv{border:5px solid var(--ink);border-radius:var(--r-ctl);background:rgba(255,255,255,.93);box-shadow:var(--sh-cta)}
+.turfBottom{
+  display:flex;align-items:center;gap:8px;width:100%;max-width:440px;
+  justify-content:center;padding:0 4px;box-sizing:border-box;
+}
+.turfNextBox{
+  display:flex;flex-direction:column;align-items:center;background:var(--panel-solid);
+  border:2.5px solid var(--ink);border-radius:var(--r-ctl);box-shadow:var(--sh-ctl);
+  padding:3px 6px;flex-shrink:1;min-width:0;
+}
+#turfNextCv{width:92px;height:45px}
+.turfClock{
+  font-family:var(--font);font-weight:800;font-size:26px;min-width:40px;text-align:center;
+  color:var(--ink);-webkit-text-stroke:.5px var(--ink);
+}
+.turfClock.vsUrgent{color:#c9402a;animation:vsPulse .5s ease-in-out infinite}
+.turfBtn{
+  font-family:var(--font);font-weight:800;font-size:18px;color:var(--ink);
+  background:var(--panel-solid);border:3px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:var(--sh-cta);padding:9px 13px;cursor:pointer;white-space:nowrap;
+}
+.turfGo{background:var(--grad-pink);color:var(--ink);font-family:var(--font-display);padding:9px 18px}
+.turfBtn:disabled{opacity:.45}
+#app{
+  position:relative;z-index:1;height:100%;
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 6px) 4px calc(env(safe-area-inset-bottom,0px) + 8px);
+  max-width:520px;margin:0 auto;
+}
+/* ---------- header ---------- */
+/* NO justify-content:space-between here. With a conditionally-rendered logo,
+   space-between redistributes free space into whatever gaps remain — which
+   stranded PAUSE in the middle of the row and made it DRIFT as the score pill
+   grew. The button group is pinned right with margin-left:auto instead, so
+   the two icons are always adjacent and never move. */
+#topbar{display:flex;align-items:center;width:100%;gap:6px;margin-bottom:6px;min-width:0}
+.tbBtns{display:flex;align-items:center;gap:6px;flex:0 0 auto;margin-left:auto}
+#logo{white-space:nowrap;display:flex;flex-direction:column;align-items:flex-start}
+#logo img{height:26px;display:block;image-rendering:pixelated;max-width:100%}
+#logo .l2{display:none} /* redundant — the wordmark already reads FRIEND SMASH! */
+.iconbtn{
+  width:42px;height:42px;border-radius:var(--r-ctl);border:2.5px solid var(--ink);
+  background:var(--panel-solid);font-size:18px;font-family:var(--font);font-weight:800;
+  box-shadow:0 3px 0 var(--ink);color:var(--ink);
+}
+.iconbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+#stats{display:flex;gap:6px}
+.pill{
+  background:var(--panel-solid);border:2.5px solid var(--ink);border-radius:var(--r-ctl);
+  padding:2px 10px 0;text-align:center;box-shadow:0 3px 0 var(--ink);min-width:58px;
+}
+.pill .lab{font-size:9px;font-weight:800;letter-spacing:1px;opacity:.55;text-transform:uppercase}
+.pill .val{font-size:17px;font-weight:800;line-height:1;padding-bottom:4px}
+/* ---------- mid ---------- */
+#mid{display:flex;gap:5px;flex:1 1 0;min-height:0;overflow:hidden;width:100%;justify-content:center;align-items:flex-start}
+#boardWrap{position:relative;height:100%;flex:0 1 auto;display:flex}
+#board{
+  display:block;border:3px solid var(--ink);border-radius:var(--r-ctl);
+  background:var(--panel);
+  box-shadow:4px 4px 0 var(--ink);
+}
+/* height:auto (not stretch) keeps the NEXT panel from ballooning, but the
+   rail must still be able to SHRINK: #mid is overflow:hidden now, so a rail
+   taller than #mid (phone LANDSCAPE, where #mid can be ~174px) would get its
+   bottom sliced off flat. Cap it and let the NEXT canvas scale down. */
+#side{display:flex;flex-direction:column;gap:8px;width:60px;flex:0 0 60px;height:auto;max-height:100%;min-height:0}
+/* The HOLD/NEXT boxes must be able to SHRINK, not just be capped: their
+   canvases are 140x320 attribute-sized, so at a 47px inner width the NEXT
+   preview wants ~107px and overflowed a short (landscape) rail by ~13px.
+   Make each box a flex column whose canvas takes the leftover height and
+   letterboxes into it. */
+#side .sidebox{min-height:0;display:flex;flex-direction:column;overflow:hidden}
+#side .sidebox canvas{flex:1 1 0;min-height:0;height:auto;object-fit:contain}
+.sidebox{
+  background:var(--panel-solid);border:2.5px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:0 3px 0 var(--ink);padding:3px 4px 5px;text-align:center;
+}
+.sidebox .lab{font-size:9px;font-weight:800;letter-spacing:1px;opacity:.55}
+.sidebox canvas{display:block;width:100%}
+#popups{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:var(--r-ctl)}
+.pop{
+  position:absolute;left:50%;width:100%;text-align:center;font-weight:800;
+  font-family:var(--font-display);
+  color:var(--signal);-webkit-text-stroke:1.5px var(--ink);text-shadow:3px 3px 0 var(--ink);
+  animation:popUp 1s ease-out forwards;pointer-events:none;
+}
+@keyframes popUp{
+  0%{transform:translate(-50%,0) scale(.3);opacity:0}
+  18%{transform:translate(-50%,-12px) scale(1.15);opacity:1}
+  30%{transform:translate(-50%,-16px) scale(1)}
+  75%{opacity:1}
+  100%{transform:translate(-50%,-58px) scale(1);opacity:0}
+}
+/* ---------- controls ---------- */
+/* Right gutter TRACKS the SMASH track's real width (layout() publishes
+   --smash-w from the rail's box) — a hardcoded value silently drifts out of
+   step the moment the rail width changes. */
+#controls{width:100%;margin-top:4px;display:flex;flex-direction:column;gap:5px;padding-right:var(--smash-gutter,66px)}
+.crow{display:flex;gap:7px;justify-content:center}
+.cbtn{
+  flex:1;max-width:108px;height:46px;border-radius:var(--r-ctl);border:3px solid var(--ink);
+  background:var(--panel-solid);font-family:var(--font);font-weight:800;font-size:21px;
+  color:var(--ink);box-shadow:0 4px 0 var(--ink);
+  display:flex;align-items:center;justify-content:center;gap:4px;
+}
+.cbtn:active,.cbtn.held{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.cbtn small{font-size:10px;letter-spacing:1px}
+/* ---------- SMASH slider ----------
+   The knob rests at the TOP of a tall track (spanning both control rows —
+   ~an inch of travel) and must be SLID to the bottom to hard-drop. Release
+   early → springs back. Impossible to misclick. */
+#controls{flex-direction:row;align-items:stretch;gap:8px}
+#ctlGrid{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
+#smashSlider{
+  /* --smash-top is written by the engine's layout() = the board's bottom edge,
+     so the track is flush with the board above and the controls below. */
+  /* left/width come from layout() so the track lines up EXACTLY with the
+     HOLD/NEXT rail above it (fallbacks only matter pre-first-layout). */
+  position:absolute;left:var(--smash-left,auto);right:4px;width:var(--smash-w,60px);
+  top:var(--smash-top,60%);bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
+  min-height:96px;
+  border:2.5px solid var(--ink);border-radius:var(--r-ctl);
+  background:repeating-linear-gradient(180deg,#e9e3f5 0 4px,#ddd3f0 4px 8px); /* lilac pixel-striped track */
+  box-shadow:inset 0 3px 0 rgba(17,17,17,.12), 0 3px 0 var(--ink);
+  touch-action:none;user-select:none;-webkit-user-select:none;
+}
+.ss-chevrons{
+  position:absolute;left:0;right:0;bottom:8px;
+  display:flex;flex-direction:column;align-items:center;line-height:.62;
+  font-family:var(--font);font-weight:800;font-size:24px;color:var(--ink);opacity:.42;
+  pointer-events:none;
+}
+.ss-chevrons span{animation:ssNudge 1.6s ease-in-out infinite}
+.ss-chevrons span:last-child{animation-delay:.18s}
+@keyframes ssNudge{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+@media (prefers-reduced-motion: reduce){ .ss-chevrons span{animation:none} }
+.ss-knob{
+  position:absolute;top:5px;left:5px;right:5px;height:58px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  background:var(--grad-pink); /* signal green — the primary action */
+  border:2.5px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:0 4px 0 var(--ink);
+  color:var(--ink);
+  font-family:var(--font-display);font-weight:700;
+  transform:translateY(var(--slide,0px));
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1); /* spring-back */
+  cursor:grab;
+}
+.ss-knob small{font-size:12px;letter-spacing:.06em}
+.ss-knob:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.ss-knob svg{width:23px;height:23px}
+.ss-knob.sliding{transition:none;cursor:grabbing}
+.ss-knob.fired{animation:ssFire .25s ease}
+@keyframes ssFire{0%{transform:translateY(0) scale(1.06,.88)}100%{transform:translateY(0) scale(1)}}
+
+/* ---------- control-copy chips (menu hints + HOW TO modal) ---------- */
+.kbd{
+  display:inline-block;font-family:var(--font);font-weight:800;font-size:12px;
+  line-height:1;color:var(--ink);background:#fff;
+  border:2px solid var(--ink);border-radius:var(--r-ctl);padding:4px 8px 3px;
+  box-shadow:0 2px 0 var(--ink);white-space:nowrap;vertical-align:middle;
+}
+.hint .kbd{margin:0 2px}
+.hint.hint-touch,.hint.hint-keys{line-height:2.1}
+/* show gesture hints on touch devices, key hints on mouse-and-keyboard rigs
+   (compound selectors: the generic .hint rule must not win the tie) */
+.hint.hint-keys{display:none}
+@media (hover:hover) and (pointer:fine){
+  .hint.hint-touch{display:none}
+  .hint.hint-keys{display:block}
+}
+.howSec{
+  font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  opacity:.5;margin:16px 0 8px;text-align:left;
+}
+.howGrid{
+  display:grid;grid-template-columns:max-content 1fr;gap:9px 14px;
+  align-items:center;text-align:left;font-weight:600;font-size:14px;
+}
+.howGrid > .kbd{justify-self:start}
+
+/* mute lives in the bottom-left corner of the screen; the arrow row is
+   inset so the corner belongs to the chip (no overlap at 375px) */
+/* Mute rides in the topbar beside PAUSE. It used to float bottom-left, which
+   forced the arrow row to be indented 56px to dodge it — moving it up hands
+   that width back to the buttons (and to the board).
+   SIZING: the row has no slack on a 360px phone (logo + 3 stat pills are both
+   at their floors), so mute must NOT be flex:none — that made #btnPause the
+   only shrinkable item and squashed it to a 27px sliver. Both control buttons
+   now hold a floor and the LOGO gives way instead. */
+#btnMute{ width:40px;height:40px;flex:0 0 auto;min-width:34px }
+#btnPause{ flex:0 0 auto;min-width:38px }
+/* The wordmark must NEVER be the thing that yields: making it shrinkable
+   didn't scale or ellipsize it, it HARD-CLIPPED mid-glyph ("Dool" over "SMA"
+   at 375px once the score hit 4 digits, and nothing at all by 320px). On
+   phones the in-game logo is pure decoration — the menu card carries the
+   brand — and the SCORE is what the player actually needs, so drop the logo
+   from the play row instead of mutilating it. */
+/* The logo is the ONLY yielding item, and it must yield by SCALING, never by
+   clipping (clipping produced "Dool" over "SMA"). Constraining its width with
+   height:auto scales the whole wordmark down proportionally, so there is
+   always something to give and no viewport band can over-constrain the row.
+   Below 430px there is no room worth scaling into, so it steps aside for the
+   SCORE — the menu card carries the brand. */
+#logo{ flex:0 1 auto;min-width:0;overflow:hidden }
+/* FIXED height, width-constrained, letterboxed. height:auto made the logo's
+   HEIGHT a function of its WIDTH — and since the logo is the only yielding
+   item, that made #topbar.offsetHeight a function of the SCORE. layout()
+   subtracts the topbar, so the whole board silently re-scaled by a full cell
+   when the score gained a digit. object-fit:contain shrinks the artwork
+   inside a constant-height box instead: no clipping, no height swing. */
+#logo img{ height:26px;width:auto;max-width:100%;object-fit:contain }
+@media (min-height:760px){ #logo img{ height:32px } }
+@media (max-width:430px){ #topbar #logo{ display:none } }
+@media (max-width:340px){ .pill{ min-width:50px } .pill .val{ font-size:15px } }
+#controls .crow:last-child{margin-left:0}
+#btnHold{background:var(--surface-blue)}
+#btnCW,#btnCCW{background:var(--surface-purple)}
+/* ---------- overlays ---------- */
+.overlay{
+  position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(17,17,17,.32);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  padding:24px;text-align:center;
+  /* ease the backdrop in instead of snapping — matches the bonus/boot overlays */
+  animation:overlayIn var(--t-in) ease both;
+}
+.overlay.hidden{display:none}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+.card{
+  background:var(--panel-solid);border:3px solid var(--ink);border-radius:var(--r-card);
+  box-shadow:var(--sh-card);
+  padding:22px 26px;max-width:340px;width:100%;
+  /* gentle overshoot so the card pops rather than blinks in */
+  animation:cardIn .22s var(--ease-pop) both;
+}
+@keyframes cardIn{from{transform:translateY(10px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.bigtitle{
+  font-family:var(--font-display);font-weight:700;font-size:34px;line-height:1.05;color:var(--ink);
+  text-shadow:3px 3px 0 var(--signal);margin-bottom:6px;
+}
+.bigtitle .t2{display:block;color:var(--ink);text-shadow:3px 3px 0 var(--coral)}
+.sub{font-weight:600;font-size:13px;opacity:.75;margin:10px 0 2px}
+.hint{font-size:11px;font-weight:600;text-align:left;margin:10px auto 0;display:inline-block;line-height:1.8}
+.hint b{display:inline-block;width:64px}
+.bigbtn{
+  margin-top:14px;width:100%;height:54px;border-radius:var(--r-cta);border:3px solid var(--ink);
+  background:var(--grad-pink);color:var(--ink);font-family:var(--font-display);
+  font-weight:700;font-size:20px;letter-spacing:.5px;
+  box-shadow:0 5px 0 var(--ink);cursor:pointer;
+}
+.bigbtn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.bigbtn.alt{background:var(--grad-purple)}
+.bigbtn.ghost{background:#fff;color:var(--ink);-webkit-text-stroke:0;text-shadow:none;font-size:16px;height:46px}
+.freeplay{
+  margin-top:12px;font-weight:600;font-size:11.5px;line-height:1.5;opacity:.75;
+}
+.freeplay b{font-weight:800}
+#menuArt{height:84px;margin:6px 0 2px;display:flex;justify-content:center;align-items:flex-end;gap:6px}
+#menuArt img{height:64px;animation:bob 2.2s ease-in-out infinite}
+#menuArt img:nth-child(2){animation-delay:.3s;height:74px}
+#menuArt img:nth-child(3){animation-delay:.6s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#overScore{font-family:var(--font-display);font-size:40px;font-weight:800;line-height:1}
+#overBest{font-weight:700;opacity:.7;font-size:14px}
+.gameovertitle{color:var(--ink)}
+@media (min-height:760px){ .cbtn{height:52px} }
+/* gore removed — the layer node stays (engine may query it) but never shows */
+#goreLayer{display:none}
+.menuLogo{width:82%;display:block;margin:2px auto 0;image-rendering:pixelated}
+.menusmash{display:none} /* redundant sub-logo — the wordmark already says SMASH! */
+/* ---------- typography polish ----------
+   Put the ink stroke BEHIND the fill so the chunky outline frames each glyph
+   instead of eating into it (fixes the "hatched/scratchy" bold text). */
+.pop{
+  paint-order: stroke fill;
+}
+/* also catch inline-styled stroked text (shop, leaderboard, auth UI, rank panel) */
+[style*="text-stroke"]{ paint-order: stroke fill; }
+/* ---------- boot splash (server-rendered; faded out by BootLoader) ---------- */
+#bootLoader{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background-color:var(--paper);background-image:var(--dither);background-size:4px 4px;
+  font-family:var(--font-display);color:var(--ink);
+  transition:opacity .5s ease;
+}
+#bootLoader.hide{opacity:0;pointer-events:none}
+.bl-stage{display:flex;align-items:flex-end;gap:10px;height:56px;margin-bottom:4px}
+.bl-px{
+  width:20px;height:20px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);
+  animation:blHop .9s steps(4,end) infinite;
+}
+.bl-px.p1{background:var(--signal);animation-delay:0s}
+.bl-px.p2{background:var(--lilac);animation-delay:.15s}
+.bl-px.p3{background:var(--pond);animation-delay:.3s}
+@keyframes blHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+.bl-word{
+  font-family:var(--font-display);font-weight:700;font-size:34px;line-height:1;letter-spacing:1px;
+  color:var(--ink);text-shadow:3px 3px 0 var(--signal);text-align:center;
+}
+.bl-sub{font-family:var(--font);font-size:12px;letter-spacing:.14em;opacity:.6;text-transform:uppercase}
+.bl-dots{display:flex;gap:8px;margin-top:6px}
+.bl-dots span{width:8px;height:8px;background:var(--ink);opacity:.4;animation:blPulse 1s steps(3,end) infinite}
+.bl-dots span:nth-child(2){animation-delay:.18s}
+.bl-dots span:nth-child(3){animation-delay:.36s}
+@keyframes blPulse{0%,100%{opacity:.2}50%{opacity:1}}
+/* ---------- bonus round overlay (video kickoff) ---------- */
+#bonusOv{
+  position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  background:rgba(17,17,17,.88);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  animation:bonusIn .25s ease both;
+}
+#bonusOv video{max-width:100%;max-height:100%;object-fit:contain}
+#bonusOv .bonus-tag{
+  position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);left:50%;transform:translateX(-50%);
+  font-family:var(--font-display);font-weight:700;font-size:28px;color:var(--sun);white-space:nowrap;
+  -webkit-text-stroke:1.5px var(--ink);text-shadow:0 3px 0 var(--ink);paint-order:stroke fill;
+  animation:bonusTag .6s var(--ease-pop) both .2s;
+}
+@keyframes bonusIn{from{opacity:0}to{opacity:1}}
+@keyframes bonusTag{from{transform:translateX(-50%) scale(.2);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
+/* ---------- daily bonus toast ---------- */
+#dailyToast{
+  position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 58px);
+  transform:translateX(-50%);z-index:40;pointer-events:none;
+  background:var(--panel-solid);border:3px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:4px 4px 0 var(--ink);
+  padding:8px 18px 9px;text-align:center;
+  animation:dailyPop var(--t-pop) var(--ease-pop) both;
+}
+#dailyToast.leaving{animation:dailyOut .25s var(--ease-out) forwards}
+#dailyToast .amt{display:block;font-family:var(--font-display);font-weight:700;font-size:18px;line-height:1.1;color:var(--pink-deep)}
+#dailyToast .strk{display:block;font-weight:700;font-size:12px;opacity:.7}
+@keyframes dailyPop{from{transform:translate(-50%,-16px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+@keyframes dailyOut{from{transform:translate(-50%,0);opacity:1}to{transform:translate(-50%,-16px);opacity:0}}
+/* ---------- standalone page chrome (shop / leaderboard / stats / admin) ----------
+   One shared shell so the four pages can't drift apart again. Page-specific
+   inner bits (rows, stats, tuning) stay inline; the chrome lives here. */
+.page-wrap{
+  height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 14px calc(env(safe-area-inset-bottom,0px) + 24px);
+  font-family:var(--font);color:var(--ink);
+}
+.page-card{
+  background:var(--panel-solid);border:3px solid var(--ink);border-radius:var(--r-card);
+  box-shadow:var(--sh-card);padding:20px 20px 22px;max-width:460px;width:100%;
+}
+.page-titlerow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.page-title{
+  font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--ink);
+  text-shadow:3px 3px 0 var(--signal);
+}
+.page-back{
+  width:40px;height:40px;flex:0 0 auto;border-radius:var(--r-row);border:2.5px solid var(--ink);
+  background:var(--blue);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--sh-ctl);text-decoration:none;
+}
+.page-cta{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:52px;border-radius:var(--r-cta);border:3px solid var(--ink);
+  background:var(--grad-pink);color:var(--ink);font-family:var(--font-display);font-weight:700;font-size:17px;
+  box-shadow:var(--sh-cta);
+  text-decoration:none;cursor:pointer;
+}
+.page-cta.alt{background:var(--grad-purple)}
+.page-cta.ghost{background:var(--panel-solid);color:var(--ink);-webkit-text-stroke:0;font-size:14px}
+.page-tabs{display:flex;gap:6px;margin:14px 0}
+.page-tab{
+  flex:1;height:44px;border-radius:var(--r-row);border:2.5px solid var(--ink);
+  background:var(--surface-purple);font-family:var(--font-display);font-weight:400;font-size:12px;color:var(--ink);
+  box-shadow:var(--sh-ctl);cursor:pointer;
+}
+.page-tab.active{background:var(--grad-pink);color:var(--ink)}
+.page-row{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;
+  border-radius:var(--r-row);border:2px solid var(--ink);background:var(--surface);
+}
+.page-note{text-align:center;font-weight:600;font-size:13px;opacity:.78;padding:22px 8px}
+/* ---------- accessibility: reduce motion ---------- */
+@media (prefers-reduced-motion: reduce){
+  #dailyToast, #dailyToast.leaving{animation:none !important}
+  .bl-px, .bl-dots span{animation:none !important}
+  #menuArt img{animation:none !important}
+  /* the biggest scale-pop in the app + the new overlay entrances */
+  #bonusOv, #bonusOv .bonus-tag{animation:none !important}
+  .overlay, .card{animation:none !important}
+  .pop{animation-duration:.6s}
+  *{scroll-behavior:auto !important}
+}
+
+/* ---- ready-up ---- */
+.readyRules{margin:12px 0 6px;text-align:left;display:flex;flex-direction:column;gap:7px}
+.readyRule{
+  font-family:var(--font);font-weight:700;font-size:14px;line-height:1.4;color:var(--ink);
+  background:var(--surface-pink);border:2px solid var(--ink);border-radius:var(--r-ctl);
+  padding:8px 12px;
+}
+.readyArt{display:flex;justify-content:center;margin:8px 0 0}
+/* Short phones (SE-class, mobile-Safari chrome): the ready card may exceed
+   the viewport — let the overlay scroll instead of clipping the READY button. */
+#vsReadyOv{overflow-y:auto;-webkit-overflow-scrolling:touch}
+#vsReadyOv .card{margin:auto 0}
+#vsReadyOv .sub{margin:6px 0 0}
+.readyArt.hidden{display:none}
+
+/* ---------- pixel display type ----------
+   Silkscreen for anything that reads as a heading, label or button; body copy
+   stays in Space Mono. Silkscreen only ships 400/700, so bold weights map to 700. */
+h1,h2,h3,
+.pill .lab,.sidebox .lab,.cbtn small,.ss-knob small,.howSec,
+#vsBar,.vsTally,.vsStatus,.vschip,.vsmode-name,
+.turfTag,.turfTally,.turfGameN,.turfBtn,.turfFlag,.turfClock,.turfNextBox .lab,
+.kbd,.worldchip{font-family:var(--font-display);font-weight:400}
+.kbd{font-size:10px;padding:4px 6px 3px}
+.pill .val{font-family:var(--font-display);font-weight:700}
+.pill .lab,.sidebox .lab{font-size:8px;opacity:.7}
+
+/* ---------- inline-styled primaries in other components ----------
+   Several components paint a primary/secondary fill inline with white,
+   ink-stroked text (tuned for the old pastel pink). On signal green and lilac
+   that is unreadable, so any inline element using those fills gets ink text. */
+[style*="var(--grad-pink)"],[style*="var(--grad-purple)"],[style*="background: var(--pink)"],[style*="background:var(--pink)"]{
+  color:var(--ink) !important;-webkit-text-stroke:0 !important;text-shadow:none !important;
+}
+
+/* ---------- Friend picker modal (components/auth/FriendPicker.tsx) ---------- */
+.rfp-ov{
+  position:fixed;inset:0;z-index:60;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  background:rgba(17,17,17,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  animation:overlayIn var(--t-in) ease both;
+  touch-action:auto;user-select:text;-webkit-user-select:text;
+}
+.rfp-card-panel{
+  width:100%;max-width:380px;max-height:calc(100dvh - 32px);overflow:auto;-webkit-overflow-scrolling:touch;
+  background:var(--panel-solid);color:var(--ink);
+  border:3px solid var(--ink);border-radius:var(--r-card);box-shadow:var(--sh-card);
+  padding:18px;font-family:var(--font);font-size:13px;line-height:1.5;text-align:left;
+  animation:cardIn .22s var(--ease-pop) both;
+}
+.rfp-card-panel p{margin:10px 0}
+.rfp-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-family:var(--font-display);font-size:15px;letter-spacing:.5px;
+  padding-bottom:10px;border-bottom:3px solid var(--ink);margin-bottom:4px;
+}
+.rfp-head b{font-weight:700}
+.rfp-x{
+  flex:0 0 auto;width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:20px;line-height:1;color:var(--ink);
+  background:var(--panel-solid);border:2.5px solid var(--ink);border-radius:var(--r-row);
+  box-shadow:0 2px 0 var(--ink);cursor:pointer;
+}
+.rfp-x:active{transform:translateY(2px);box-shadow:none}
+.rfp-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:42px;padding:0 14px;margin-top:6px;
+  font-family:var(--font-display);font-size:13px;letter-spacing:.3px;color:var(--ink);
+  background:var(--panel-solid);border:3px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:var(--sh-ctl);cursor:pointer;
+  transition:transform var(--t-fast) ease, box-shadow var(--t-fast) ease;
+}
+@media (hover:hover){ .rfp-btn:not(:disabled):hover{transform:translateY(-1px)} }
+.rfp-btn:not(:disabled):active{transform:translateY(3px);box-shadow:0 0 0 var(--ink)}
+.rfp-btn:disabled{opacity:.5;cursor:default}
+.rfp-primary{background:var(--grad-pink)}
+.rfp-row{display:flex;flex-wrap:wrap;gap:8px}
+.rfp-row .rfp-btn{flex:1 1 140px}
+.rfp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin:10px 0}
+.rfp-card{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:10px 6px 8px;min-width:0;
+  font-family:var(--font-display);font-size:13px;color:var(--ink);
+  background:var(--panel-solid);border:3px solid var(--ink);border-radius:var(--r-ctl);
+  box-shadow:var(--sh-ctl);cursor:pointer;
+  transition:transform var(--t-fast) ease, box-shadow var(--t-fast) ease, background var(--t-fast) ease;
+}
+.rfp-card canvas{display:block;margin:0 auto 4px;image-rendering:pixelated;image-rendering:crisp-edges}
+.rfp-card small{font-family:var(--font);font-size:10px;opacity:.6;text-transform:uppercase;letter-spacing:.06em}
+.rfp-card em{
+  font-family:var(--font);font-style:normal;font-size:10px;margin-top:3px;padding:1px 5px;
+  background:var(--signal);border:1.5px solid var(--ink);
+}
+@media (hover:hover){ .rfp-card:not(:disabled):hover{background:var(--surface-pink);transform:translateY(-2px);box-shadow:0 5px 0 var(--ink)} }
+.rfp-card:not(:disabled):active{transform:translateY(3px);box-shadow:0 0 0 var(--ink);background:var(--signal)}
+.rfp-card:focus-visible,.rfp-btn:focus-visible,.rfp-x:focus-visible,.rfp-link:focus-visible{outline:3px solid var(--pond);outline-offset:2px}
+.rfp-card:disabled{opacity:.45;cursor:default}
+.rfp-err{color:#c9402a;font-weight:700;border-left:4px solid var(--coral);padding-left:8px}
+.rfp-note{font-size:11px;opacity:.6}
+.rfp-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin-top:14px;padding-top:10px;border-top:2px dashed var(--ink);
+  font-family:var(--font);font-size:11px;
+}
+.rfp-foot > span{opacity:.7;font-variant-numeric:tabular-nums}
+.rfp-link{
+  font-family:var(--font);font-size:11px;font-weight:700;color:var(--ink);
+  background:none;border:0;padding:4px 0;text-decoration:underline;text-underline-offset:3px;cursor:pointer;
+}
+@media (prefers-reduced-motion: reduce){ .rfp-ov,.rfp-card-panel{animation:none !important} .bl-px{animation:none !important} }
+
+
+/* ---- Daily RF pool bar + sheet (components/PoolPanel.tsx) ---- */
+.rfpool-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:32;display:flex;gap:6px;width:min(420px,calc(100vw - 20px));font-family:var(--font)}
+.rfpool-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:7px 10px;background:var(--ink);color:#fff;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--signal,#CCFF00);cursor:pointer;text-align:left}
+.rfpool-pot{font-family:var(--font-display,var(--font));font-size:13px;letter-spacing:.5px}
+.rfpool-pot b{color:var(--signal,#CCFF00);font-weight:400}
+.rfpool-meta{font-size:10.5px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.rfpool-toggle{flex:0 0 auto;min-width:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 8px;background:#fff;color:var(--ink);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);font-family:var(--font-display,var(--font));font-size:12px;cursor:pointer}
+.rfpool-toggle small{font-family:var(--font);font-size:10px;opacity:.7}
+.rfpool-toggle.on{background:var(--signal,#CCFF00)}
+.rfpool-toggle:active,.rfpool-info:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.rfpool-sheet{max-width:420px}
+.rfpool-big{font-family:var(--font-display,var(--font));font-size:40px;line-height:1;margin:8px 0 2px;text-shadow:3px 3px 0 var(--signal,#CCFF00)}
+.rfpool-big span{font-size:18px}
+.rfpool-me{font-size:12px;margin:8px 0;padding:6px 8px;background:var(--surface-pink,#f6ffd6);border:2px solid var(--ink)}
+.rfpool-h{font-family:var(--font-display,var(--font));font-size:12px;margin:12px 0 4px;letter-spacing:.5px}
+.rfpool-list{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:3px}
+.rfpool-list li{display:grid;grid-template-columns:30px 28px 1fr auto auto;align-items:center;gap:8px;padding:4px 6px;border:2px solid var(--ink);background:#fff;font-size:12px}
+.rfpool-list.small li{grid-template-columns:30px 22px 1fr auto}
+.rfpool-list li.you{background:var(--signal,#CCFF00)}
+.rfpool-list .r{font-family:var(--font-display,var(--font))}
+.rfpool-list .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rfpool-list .s{font-variant-numeric:tabular-nums}
+.rfpool-list .p{font-weight:700;font-variant-numeric:tabular-nums}
+.rfpool-rules{margin:4px 0 8px 16px;font-size:11.5px;line-height:1.5}

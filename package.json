@@ -1,0 +1,41 @@
+{
+  "name": "friend-smash",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node --import tsx --test test/*.test.ts",
+    "verify:db": "node --import tsx scripts/verify-db.mjs",
+    "stress:db": "node --import tsx scripts/stress-db.mjs",
+    "db:setup": "node --env-file=.env.local --import tsx scripts/db-setup.mjs",
+    "moderate:handle": "node --env-file=.env.local --import tsx scripts/moderate-handle.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.2",
+    "@rarefriends/friendsdk": "file:vendor/rarefriends-friendsdk-0.1.2.tgz",
+    "drizzle-orm": "^0.45.2",
+    "next": "^14.2.35",
+    "postgres": "^3.4.9",
+    "qrcode": "^1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "viem": "^2.56.3"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "8.57.0",
+    "eslint-config-next": "^14.2.35",
+    "tsx": "^4.22.4",
+    "typescript": "5.4.5"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}

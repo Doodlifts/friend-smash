@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "friend-smash",
+      "runtimeExecutable": "/Users/mattnofi/.local/node22/bin/npx",
+      "runtimeArgs": ["next", "dev", "-H", "0.0.0.0", "-p", "3100"],
+      "port": 3100,
+      "env": { "PATH": "/Users/mattnofi/.local/node22/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
+    }
+  ]
+}
