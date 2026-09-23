@@ -1,16 +1,16 @@
 /* ============================================================
    lib/rf/economy-rules.ts — every RF number in the game, in one place.
 
-   Units: 1 unit = 0.01 RF (see lib/rf/format.ts). All SIMULATED.
+   Units: 1 unit = 1 RF (see lib/rf/format.ts). All SIMULATED.
    These are the exact terms published in the vibeathon submission README.
    ============================================================ */
 
 /** Ranked daily pool: price of ONE ranked run. */
-export const POOL_ENTRY = 50; // 0.50 RF
+export const POOL_ENTRY = 50; // 50 RF
 /** Of each entry: this much funds today's prize pool… */
-export const POOL_SHARE = 40; // 0.40 RF (80%)
+export const POOL_SHARE = 40; // 40 RF (80%)
 /** …and this much is burned forever. */
-export const POOL_BURN = POOL_ENTRY - POOL_SHARE; // 0.10 RF (20%)
+export const POOL_BURN = POOL_ENTRY - POOL_SHARE; // 10 RF (20%)
 
 /** Paid places per daily pool (top-heavy linear split, remainder to #1). */
 export const POOL_PAID_PLACES = 10;
@@ -28,9 +28,21 @@ export const VERSUS_RAKE_BPS = 500; // 5%
 /** Power-ups (practice + versus only): 100% of the price is burned. */
 export const POWERUP_BURN_BPS = 10_000;
 
+/**
+ * Power-up UNLOCKS by REAL $RAREFRIENDS held in the Friend's own wallet (its
+ * token-bound account, read on-chain; never moved). Buying the power-up still
+ * costs SIMULATED RF. Whole RF.
+ */
+export const POWERUP_UNLOCK_RF: Record<string, number> = {
+  next_peek: 1_000, // Friend Radar
+  slow_fall: 10_000, // Nap Time
+  reroll: 50_000, // Swap Friend
+  bomb: 100_000, // Pixel Bomb
+};
+
 /** Simulated faucet — stands in for buying RF on the market. */
-export const STARTER_GRANT = 1_000; // 10 RF, once per Friend
-export const DAILY_GRANT = 100; // 1 RF per UTC day (DAILY_BONUS_ENABLED=1)
+export const STARTER_GRANT = 1_000; // 1,000 RF, once per Friend
+export const DAILY_GRANT = 100; // 100 RF per UTC day (DAILY_BONUS_ENABLED=1)
 
 /** UTC day key, e.g. "2026-09-22". */
 export function utcDay(d: Date = new Date()): string {

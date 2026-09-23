@@ -192,7 +192,7 @@ export default function AdminPage() {
               <>
                 <div className="num" style={s.spend}>{n(split.spend)} <span style={{ fontSize: 12 }}>RF spent (sim)</span></div>
                 <div style={s.legs}>
-                  <Leg label="$RAREFRIENDS buy & burn (sim)" pct="25%" value={n(split.dood)} />
+                  <Leg label="Buy & burn $RAREFRIENDS (sim)" pct="25%" value={n(split.dood)} />
                   <Leg label="Friends floor buyback (sim)" pct="20%" value={n(split.floor)} />
                   <Leg label="Leaderboard rewards" pct="35%" value={n(split.leaderboard)} hi />
                   <Leg label="Team" pct="20%" value={n(split.team)} />

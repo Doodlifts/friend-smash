@@ -98,7 +98,7 @@ export const powerups = pgTable("powerups", {
   key: text("key").primaryKey(), // 'slow_fall' | 'bomb' | 'reroll' | ...
   name: text("name").notNull(),
   description: text("description").notNull(),
-  price: integer("price").notNull(), // in $SMASH mock units
+  price: integer("price").notNull(), // in RF units (simulated)
   active: boolean("active").notNull().default(true),
 });
 
@@ -139,7 +139,7 @@ export const ledger = pgTable(
 
 /* ---------------- VERSUS (multiplayer) ----------------
    match_queue: one row per player waiting for an opponent at a wager tier.
-   matches: the authoritative match state machine. Wagers are MOCK $SMASH
+   matches: the authoritative match state machine. Wagers are SIMULATED RF
    (ledger entries) — same rail as shop purchases; on-chain stays deferred.
    Round-by-round data lives in `rounds` jsonb:
      [{ n, seed, startsAt, deadline,
@@ -165,7 +165,7 @@ export const matches = pgTable(
     status: text("status").notNull(), // 'active' | 'settled' | 'aborted'
     p1: uuid("p1").notNull().references(() => users.id),
     p2: uuid("p2").notNull().references(() => users.id),
-    wager: integer("wager").notNull().default(0), // per player, MOCK $SMASH
+    wager: integer("wager").notNull().default(0), // per player, SIMULATED RF
     // 'speed' = best-of-5 60s same-seed rounds. 'turf' = turn-based
     // shared-board TURF WAR (state in `turf`, refereed by lib/turf.ts).
     mode: text("mode").notNull().default("speed"),

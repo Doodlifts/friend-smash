@@ -1,4 +1,4 @@
-/* POST /api/admin/airdrop — grant mock $SMASH to EVERY current user.
+/* POST /api/admin/airdrop — grant simulated RF to EVERY current user.
 
    Admin-gated. MOCK ledger only (same rail as the shop; on-chain stays
    deferred — CLAUDE.md money rule). Idempotent by construction: one ledger
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     refId,
     message:
       grantedN > 0
-        ? `Granted ${amount.toLocaleString()} $SMASH to ${grantedN} user${grantedN === 1 ? "" : "s"}` +
+        ? `Granted ${amount.toLocaleString()} RF to ${grantedN} user${grantedN === 1 ? "" : "s"}` +
           (grantedN < (Number(total?.n) || 0) ? ` (${(Number(total?.n) || 0) - grantedN} already had ref ${refId})` : "") + "."
         : `Nobody granted — every user already received ref ${refId}. Use a new ref for a fresh airdrop.`,
   });

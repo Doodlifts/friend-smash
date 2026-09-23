@@ -2,7 +2,7 @@
    lib/economyMetrics.ts — read-only economy metrics for the admin dashboard.
 
    The MOCK provider computes everything from the `ledger` (source of truth) +
-   the leaderboard. When the on-chain $SMASH economy ships, an OnChain provider
+   the leaderboard. When the on-chain $RAREFRIENDS economy ships, an OnChain provider
    implements this SAME interface (reading the vault / PDA / chain) and
    getEconomyMetrics() flips to it — the dashboard UI + types stay identical.
 
@@ -141,7 +141,7 @@ export const mockEconomyMetrics: EconomyMetrics = {
 };
 
 /** The active metrics provider: on-chain once configured (devnet/mainnet RPC +
- *  $SMASH mint), otherwise the mock (ledger-backed) provider. Read at call time. */
+ *  RF token), otherwise the mock (ledger-backed) provider. Read at call time. */
 export function getEconomyMetrics(): EconomyMetrics {
   return mockEconomyMetrics; // RF is simulated in this build (lib/rf/settlement.ts)
 }

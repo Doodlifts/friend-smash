@@ -3,8 +3,8 @@
 
    Loop:
      1. A signed-in Friend opens a verified run (/api/run/start) and pays a
-        ranked ENTRY for it (/api/pool/enter): 0.40 RF → today's pool,
-        0.10 RF → burn. The run is marked ranked for that UTC day.
+        ranked ENTRY for it (/api/pool/enter): 40 RF → today's pool,
+        10 RF → burn. The run is marked ranked for that UTC day.
      2. The run is played and server-REPLAYED like every run (anti-cheat).
         Ranked runs may not use power-ups: pure skill, equal loadout.
      3. After the day closes (+2h grace for in-flight runs) the pool pays the
@@ -85,7 +85,7 @@ export async function enterPool(
     });
   } catch (e) {
     if (e instanceof InsufficientFundsError) {
-      return { ok: false, status: 402, error: `Ranked entry is ${POOL_ENTRY / 100} RF (simulated) — not enough RF.` };
+      return { ok: false, status: 402, error: `Ranked entry is ${POOL_ENTRY} RF (simulated) — not enough RF.` };
     }
     throw e;
   }

@@ -5,7 +5,9 @@
    When a Friend is signed in (wallet or pasted address), read every hardwired
    Friend held by that address (FriendSDK readOwnedFriends — read-only, no
    wallet needed), fetch each one's canonical sprite (createFriendReader), and
-   hand them to the piece renderer. The chosen Friend comes first. Signed out →
+   hand them to the piece renderer with each Friend's on-chain WEIGHT class
+   (lib/rf/traits: generation + activation tier → heavier pieces fall slower).
+   The chosen Friend comes first. Signed out →
    generic on-chain Friends. Renders nothing. */
 
 import { useEffect } from "react";
@@ -16,6 +18,9 @@ import { spriteFrame } from "@rarefriends/friendsdk/sprites";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { friendReader } from "@/components/auth/FriendPortrait";
 import { setPieceFriends } from "@/lib/rf/pieceArt";
+import { readFriendTraits } from "@/lib/rf/traits";
+
+export const PIECES_CHANGED = "rfsmash:pieces-changed";
 
 let client: ReturnType<typeof createFriendPublicClient> | null = null;
 
@@ -37,6 +42,7 @@ export default function FriendPieces() {
     if (!owner || !chosen) {
       setPieceFriends(null);
       refresh();
+      window.dispatchEvent(new Event(PIECES_CHANGED));
       return;
     }
     let alive = true;
@@ -53,17 +59,21 @@ export default function FriendPieces() {
         await Promise.all(
           ids.map(async (id) => {
             try {
-              const s = await friendReader().read(BigInt(id));
-              return { id, rows: spriteFrame(s, "down", false, 0).frame.rows };
+              const [s, traits] = await Promise.all([
+                friendReader().read(BigInt(id)),
+                readFriendTraits((client ??= createFriendPublicClient()), BigInt(id)).catch(() => null),
+              ]);
+              return { id, rows: spriteFrame(s, "down", false, 0).frame.rows, weightClass: traits?.weightClass ?? 1, generation: traits?.generation };
             } catch {
               return null;
             }
           }),
         )
-      ).filter((x): x is { id: string; rows: readonly string[] } => !!x);
+      ).filter((x): x is NonNullable<typeof x> => !!x);
       if (!alive) return;
       setPieceFriends(list.length ? list : null);
       refresh();
+      window.dispatchEvent(new Event(PIECES_CHANGED));
     })();
     return () => {
       alive = false;

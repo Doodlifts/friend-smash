@@ -73,11 +73,32 @@ export function portraitFor(family: number, index: number): boolean[][] {
    on-chain Friends from portraits.json. */
 
 export type SpriteRows = readonly string[]; // 16 rows of "#"/"."
+export interface PieceFriend {
+  id: string;
+  rows: SpriteRows;
+  /** 1 (light) … 5 (heaviest) — lib/rf/traits weightClass. */
+  weightClass?: number;
+}
 const TYPE_ORDER: PieceType[] = ["T", "L", "J", "S", "Z", "O", "I"];
-let walletFriends: { id: string; rows: SpriteRows }[] | null = null;
+let walletFriends: PieceFriend[] | null = null;
 
-export function setPieceFriends(list: { id: string; rows: SpriteRows }[] | null) {
+export function setPieceFriends(list: PieceFriend[] | null) {
   walletFriends = list && list.length ? list.slice(0, 7) : null;
+}
+
+/** Which of the player's Friends a piece type wears (null for guests). */
+export function friendFor(t: PieceType): PieceFriend | null {
+  return walletFriends ? walletFriends[TYPE_ORDER.indexOf(t) % walletFriends.length] : null;
+}
+
+/** Fall-time multiplier for a piece: heavier Friend → slower (class 5 = 1.6×). */
+export function gravityScaleFor(t: PieceType): number {
+  const w = friendFor(t)?.weightClass ?? 1;
+  return 1 + 0.15 * (Math.max(1, Math.min(5, w)) - 1);
+}
+
+export function pieceFriendList(): readonly PieceFriend[] {
+  return walletFriends ?? [];
 }
 export function pieceFriendIds(): string[] {
   return walletFriends ? walletFriends.map((f) => f.id) : [];
@@ -87,7 +108,8 @@ const rowsFromBits = (b: boolean[][]): SpriteRows => b.map((r) => r.map((x) => (
 
 /** The sprite a piece type wears. */
 export function spriteFor(t: PieceType): SpriteRows {
-  if (walletFriends) return walletFriends[TYPE_ORDER.indexOf(t) % walletFriends.length].rows;
+  const f = friendFor(t);
+  if (f) return f.rows;
   return rowsFromBits(portraitFor(PIECE_STYLE[t].family, 2 + (t.charCodeAt(0) % 5)));
 }
 

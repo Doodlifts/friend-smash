@@ -27,7 +27,7 @@ export interface PowerupDef {
   key: string;
   name: string;
   description: string;
-  price: number; // RF units (1 = 0.01 RF), burned on purchase
+  price: number; // whole RF (simulated), 100% burned on purchase
   effect: PowerupEffect;
   active: boolean;
   /**

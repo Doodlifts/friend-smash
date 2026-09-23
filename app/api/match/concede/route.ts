@@ -1,5 +1,5 @@
 /* POST /api/match/concede — quit the match. The opponent wins and the
-   MOCK-$SMASH escrow pays out to them immediately. Idempotent: a non-active
+   simulated-RF escrow pays out to them immediately. Idempotent: a non-active
    match is a no-op. Body: { matchId }. */
 
 import { NextResponse } from "next/server";

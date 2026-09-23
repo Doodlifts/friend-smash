@@ -2,7 +2,7 @@
    lib/rf/ledger.ts — the SIMULATED $RAREFRIENDS ledger (double-entry).
 
    ⚠️  NO REAL TOKENS MOVE. Balances are integers in Postgres
-   (1 unit = 0.01 RF). Every movement is a TRANSFER between two accounts, written
+   (1 unit = 1 RF). Every movement is a TRANSFER between two accounts, written
    as two ledger rows (−amount / +amount) with the same (reason, refId), inside
    one transaction, idempotent on the ledger's (user, reason, refId) guard.
 

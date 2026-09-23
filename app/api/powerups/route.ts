@@ -17,6 +17,8 @@ import { CATALOG, getInventory, purchasePowerup } from "@/lib/powerups";
 import { upsertFriendUser } from "@/lib/users";
 import { isPurchaseLimited } from "@/lib/rateLimit";
 import { logRateLimit } from "@/lib/log";
+import { friendWalletRf } from "@/lib/rf/holdings";
+import { POWERUP_UNLOCK_RF } from "@/lib/rf/economy-rules";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +29,11 @@ const publicCatalog = CATALOG.filter((p) => p.active).map((p) => ({
   description: p.description,
   price: p.price,
   effect: p.effect,
+  /** REAL $RAREFRIENDS the Friend's own wallet must hold to unlock it. */
+  unlockRf: POWERUP_UNLOCK_RF[p.key] ?? 0,
 }));
+
+const unlocked = (key: string, held: number | null) => (held ?? 0) >= (POWERUP_UNLOCK_RF[key] ?? 0);
 
 export async function GET(req: Request) {
   const base = { catalog: publicCatalog, mock: true };
@@ -37,11 +43,18 @@ export async function GET(req: Request) {
     if (verified) {
       const db = getDb()!;
       const user = await upsertFriendUser(db, verified);
-      const [balance, inventory] = await Promise.all([
+      const [balance, inventory, heldRf] = await Promise.all([
         getBalance(db, user.id),
         getInventory(db, user.id),
+        friendWalletRf(verified.friendWallet),
       ]);
-      return NextResponse.json({ ...base, balance, inventory });
+      return NextResponse.json({
+        ...base,
+        catalog: publicCatalog.map((p) => ({ ...p, unlocked: unlocked(p.key, heldRf) })),
+        balance,
+        inventory,
+        holdings: { friendWallet: verified.friendWallet, rf: heldRf },
+      });
     }
   }
   return NextResponse.json(base);
@@ -62,6 +75,23 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as { key?: string; purchaseId?: string } | null;
   if (!body || typeof body.key !== "string" || typeof body.purchaseId !== "string") {
     return NextResponse.json({ error: "Missing key or purchaseId." }, { status: 400 });
+  }
+
+  // Unlock gate: REAL RF held in the Friend's token-bound wallet (read-only).
+  const need = POWERUP_UNLOCK_RF[body.key] ?? 0;
+  if (need > 0) {
+    const held = await friendWalletRf(ctx.session.friendWallet);
+    if ((held ?? 0) < need) {
+      return NextResponse.json(
+        {
+          error: `Locked: hold ${need.toLocaleString()} $RAREFRIENDS in your Friend's wallet to unlock (it holds ${(held ?? 0).toLocaleString()}).`,
+          locked: true,
+          needRf: need,
+          heldRf: held,
+        },
+        { status: 403 },
+      );
+    }
   }
 
   const result = await purchasePowerup(ctx.db, {

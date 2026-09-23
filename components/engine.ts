@@ -19,7 +19,7 @@
    This file is browser-only and must run after the DOM has mounted.
    ============================================================ */
 
-import { pieceDataUrl, pieceCanvas, wordmarkDataUrl, PIECE_STYLE } from "@/lib/rf/pieceArt";
+import { pieceDataUrl, pieceCanvas, wordmarkDataUrl, PIECE_STYLE, gravityScaleFor } from "@/lib/rf/pieceArt";
 import { bombBlast } from "@/lib/pieces";
 import { SevenBag, randomSeed } from "@/lib/rng";
 import {
@@ -2043,6 +2043,10 @@ export function startEngine(): () => void {
       // gravity
       G.dropAcc += dt * (keys.down||touch.softding ? 18 : 1);
       let gms = gravityMs(G.level);
+      // Rare Friends WEIGHT: a piece wearing a heavier Friend (earlier gen /
+      // higher activation tier) falls slower. Timing only — the server replay
+      // verifies placements, not gravity, so this can't desync anti-cheat.
+      if (G.cur) gms *= gravityScaleFor(G.cur.t);
       if (performance.now() < slowUntil) gms *= 3; // slow_fall power-up
       while (G.dropAcc>=gms){
         G.dropAcc -= gms;
@@ -2697,8 +2701,8 @@ export function startEngine(): () => void {
       let sub;
       if (r.aborted) sub = "Nobody showed up to smash. Stakes returned.";
       else if (r.draw) sub = "Inconceivable. Stakes returned.";
-      else if (r.won) sub = r.wager > 0 ? "+" + ((r.wager*2 - Math.floor(r.wager*2*0.05))/100).toLocaleString() + " RF (simulated) — pot minus the 5% burn is yours." : "Bragging rights: acquired.";
-      else sub = r.wager > 0 ? "Your " + (r.wager/100).toLocaleString() + " RF (simulated) rides home with " + (r.oppHandle || "them").toUpperCase() + "." : "Avenge yourself immediately.";
+      else if (r.won) sub = r.wager > 0 ? "+" + (r.wager*2 - Math.floor(r.wager*2*0.05)).toLocaleString() + " RF (simulated) — pot minus the 5% burn is yours." : "Bragging rights: acquired.";
+      else sub = r.wager > 0 ? "Your " + r.wager.toLocaleString() + " RF (simulated) rides home with " + (r.oppHandle || "them").toUpperCase() + "." : "Avenge yourself immediately.";
       // How it ended — a forfeit win must SAY it was a forfeit (playtest:
       // "I was awarded a victory even though I never completed a line").
       const HOW = {
@@ -2791,7 +2795,7 @@ export function startEngine(): () => void {
       } else {
         const rec = vsRecStr(m.oppRecord, "speed");
         vsShowSplash("OPPONENT FOUND!",
-          m.wager > 0 ? (m.wager/100).toLocaleString() + " RF each (simulated) — winner takes the pot, 5% burns" : "Friendly match — pride on the line",
+          m.wager > 0 ? m.wager.toLocaleString() + " RF each (simulated) — winner takes the pot, 5% burns" : "Friendly match — pride on the line",
           vsTallyStr(m.myWins, m.oppWins, m.winsNeeded), "", false,
           (m.oppHandle || "A MYSTERY FRIEND").toUpperCase() + (rec ? " · " + rec : ""));
       }
@@ -3205,7 +3209,7 @@ export function startEngine(): () => void {
         opp.className = "turfTag " + (T.myTeam === "pink" ? "turfBlue" : "turfPink");
       }
       const rec = vsRecStr(T.oppRecord, "turf");
-      vsShowSplash("TURF WAR!", T.wager > 0 ? T.wager + " $SMASH each in the pot" : "Pride on the line",
+      vsShowSplash("TURF WAR!", T.wager > 0 ? T.wager.toLocaleString() + " RF each (simulated)" : "Pride on the line",
         "", "", false, (T.oppHandle || "A MYSTERY FRIEND").toUpperCase() + (rec ? " · " + rec : ""));
       setTimeout(()=>{ if (turfc) vsHideSplash(); }, 2600);
       Music.stop(); Music.start();
@@ -3472,7 +3476,7 @@ export function startEngine(): () => void {
     if (recEl) recEl.textContent = rec ? "THEIR RECORD · " + rec : "";
     const meta = vsEl("readyMeta");
     if (meta) meta.textContent = (L.mode === "turf" ? "TURF WAR" : "SPEED SMASH") +
-      (st.wager > 0 ? " · " + st.wager + " $SMASH each in the pot" : " · friendly match");
+      (st.wager > 0 ? " · " + st.wager.toLocaleString() + " RF each (simulated)" : " · friendly match");
     const artT = vsEl("readyArtTurf"), artS = vsEl("readyArtSpeed");
     if (artT) artT.classList.toggle("hidden", L.mode !== "turf");
     if (artS) artS.classList.toggle("hidden", L.mode === "turf");

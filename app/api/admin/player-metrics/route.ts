@@ -1,6 +1,6 @@
 /* GET /api/admin/player-metrics — player health at a glance (admin-gated).
 
-   DAU/WAU/MAU, retention, session quality, abandon rate, and $SMASH spend —
+   DAU/WAU/MAU, retention, session quality, abandon rate, and RF spend —
    all computed read-only from tables we already write (users/runs/ledger). */
 
 import { NextResponse } from "next/server";

@@ -1,10 +1,10 @@
-/* /api/daily — the once-per-day play bonus (mock $SMASH).
+/* /api/daily — the once-per-day play bonus (simulated RF).
 
    GET  -> { claimedToday, streak, amount, balance } (read-only status)
    POST -> claim today's bonus. Idempotent by UTC date (a second POST the same
            day returns awarded:false). { awarded, amount, streak, balance }
 
-   $SMASH is a MOCKED, server-tracked balance — no on-chain anything. */
+   RF is a MOCKED, server-tracked balance — no on-chain anything. */
 
 import { NextResponse } from "next/server";
 import { authedContext, isResponse } from "@/lib/apiAuth";

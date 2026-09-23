@@ -1,7 +1,7 @@
 /* ============================================================
    lib/economy.ts — balance helpers over the SIMULATED RF ledger.
 
-   ⚠️  SIMULATED RF ONLY (1 unit = 0.01 RF). All movements are double-entry
+   ⚠️  SIMULATED RF ONLY (1 unit = 1 RF). All movements are double-entry
    transfers — see lib/rf/ledger.ts (accounts, invariants) and
    lib/rf/settlement.ts (the on-chain swap-in point). earn() now draws from
    the simulated faucet and spend() burns; nothing is minted from thin air.

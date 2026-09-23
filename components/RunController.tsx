@@ -11,7 +11,7 @@
 
    RANKED (daily prize pool): when the player's ranked toggle is on, taking a
    run for a new game also pays its SIMULATED entry via /api/pool/enter
-   (0.40 RF to today's pool, 0.10 RF burned). If entry fails (not enough RF,
+   (40 RF to today's pool, 10 RF burned). If entry fails (not enough RF,
    ownership no longer verifies) the game simply continues as practice. */
 
 import { useCallback, useEffect, useRef, useState } from "react";

@@ -1,6 +1,6 @@
 /* /api/match/queue — VERSUS matchmaking queue.
 
-   POST { wager } → join (or retier) the queue at a MOCK-$SMASH wager tier and
+   POST { wager } → join (or retier) the queue at a simulated-RF wager tier and
    attempt an immediate pairing. DELETE → leave the queue. Wager escrow happens
    only at pairing time, so leaving the queue never needs a refund. */
 

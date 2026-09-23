@@ -2,7 +2,7 @@
 
    Body: { runId }. Auth required. Re-verifies on Robinhood chain (FriendSDK
    readGenerationEligibility) that the signed-in wallet STILL owns the Friend
-   before charging: 0.40 RF → today's pool, 0.10 RF → burned (SIMULATED).
+   before charging: 40 RF → today's pool, 10 RF → burned (SIMULATED).
    Idempotent per run. 402 if the Friend can't afford it. */
 
 import { NextResponse } from "next/server";

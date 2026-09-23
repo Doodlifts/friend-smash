@@ -254,7 +254,7 @@ await section("purchase: transactional, idempotent, insufficient-funds rejected"
   assert.equal(broke.ok, false);
 });
 
-await section("run reward: verified run grants $SMASH (idempotent)", async () => {
+await section("run reward: verified run grants RF (idempotent)", async () => {
   const u = await upsertUserByDid(db, "did:earner");
   const run = await createRun(db, u.id, golden.seed);
   const res = await finishRun(db, { runId: run.id, userId: u.id, summary: golden.summary, log: golden.log });
@@ -401,7 +401,7 @@ await section("daily bonus: awards once/day, streak grows + resets, idempotent",
   assert.equal(st.balance, DAILY_BONUS * 3);
 });
 
-await section("run reward: disabled flag grants no $SMASH (run still verifies)", async () => {
+await section("run reward: disabled flag grants no RF (run still verifies)", async () => {
   const u = await upsertUserByDid(db, "did:noreward");
   process.env.RUN_REWARD_ENABLED = "0"; // gate off (runRewardsEnabled reads at call time)
   try {

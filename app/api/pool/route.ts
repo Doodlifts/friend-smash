@@ -3,7 +3,7 @@
    { day, closesAt, settlesAt, pot, entries, entryFee, poolShare, burnPerEntry,
      standings[{rank, friendId, handle, score, projectedPrize}], me?, yesterday?,
      totals{burned, prizesPaid, faucetIssued} }
-   Amounts are integer units (1 = 0.01 RF). Reading also settles any pool
+   Amounts are integer units (1 = 1 RF). Reading also settles any pool
    whose payout time has passed (lazy, idempotent). */
 
 import { NextResponse } from "next/server";

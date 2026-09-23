@@ -13,6 +13,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { validateHandle } from "@/lib/handle";
 import FriendPortrait from "./auth/FriendPortrait";
+import { pieceFriendList, type PieceFriend } from "@/lib/rf/pieceArt";
+import { PIECES_CHANGED } from "./FriendPieces";
 import { IconUser } from "./icons";
 import { formatRf } from "@/lib/rf/format";
 
@@ -105,6 +107,13 @@ function AuthBarInner() {
   const [handleErr, setHandleErr] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [crew, setCrew] = useState<readonly PieceFriend[]>([]);
+  useEffect(() => {
+    const h = () => setCrew(pieceFriendList());
+    h();
+    window.addEventListener(PIECES_CHANGED, h);
+    return () => window.removeEventListener(PIECES_CHANGED, h);
+  }, []);
 
   const did = user ? `friend:${user.friendId}` : null;
   const friendWallet = user?.friendWallet ?? "";
@@ -330,6 +339,29 @@ function AuthBarInner() {
                   <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.6 }}>SIMULATED balance · no real tokens</div>
                 </div>
 
+                {crew.length > 0 && (
+                  <div style={{ marginTop: 14, textAlign: "left" }}>
+                    <div style={{ fontWeight: 800, fontSize: 12, opacity: 0.6, letterSpacing: 1 }}>
+                      YOUR FRIENDS ARE THE PIECES
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
+                      {crew.map((f) => (
+                        <div key={f.id} style={{ textAlign: "center", fontSize: 10, fontWeight: 700 }} title={`Friend #${f.id}`}>
+                          <FriendPortrait friendId={f.id} size={34} />
+                          <div>W{f.weightClass ?? 1}</div>
+                          <div style={{ opacity: 0.6 }}>
+                            {(f.weightClass ?? 1) > 1 ? `-${Math.round(15 * ((f.weightClass ?? 1) - 1))}% speed` : "normal"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 10.5, opacity: 0.65, marginTop: 4, lineHeight: 1.4 }}>
+                      Weight comes from each Friend&apos;s on-chain generation + activation tier — the inputs to its RF
+                      reward weight. Heavier Friends fall slower.
+                    </div>
+                  </div>
+                )}
+
                 {friendWallet && (
                   <div style={{ marginTop: 14, textAlign: "left" }}>
                     <div style={{ fontWeight: 800, fontSize: 12, opacity: 0.6, letterSpacing: 1 }}>
@@ -372,8 +404,9 @@ function AuthBarInner() {
                 >
                   <div style={{ fontWeight: 800, fontSize: 13 }}>How RF works here</div>
                   <div style={{ fontWeight: 600, fontSize: 11.5, opacity: 0.8, marginTop: 4, lineHeight: 1.5 }}>
-                    Upgrades <b>burn</b> RF. Ranked entries fill a <b>daily prize pool</b> paid to the top
-                    scores, with a slice burned. Balances belong to your Friend and move with the NFT. Everything
+                    Power-ups <b>unlock</b> by the real $RAREFRIENDS your Friend&apos;s wallet holds and{" "}
+                    <b>burn</b> simulated RF when bought. Ranked entries fill a <b>daily prize pool</b> paid to the
+                    top scores, with a slice burned. Balances belong to your Friend and move with the NFT. Everything
                     is <b>simulated</b> for the vibeathon — at launch the same ledger settles in real $RAREFRIENDS
                     to the Friend wallet above.
                   </div>

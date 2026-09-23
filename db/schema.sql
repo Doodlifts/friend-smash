@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS powerups (
   key         text PRIMARY KEY,             -- 'slow_fall' | 'bomb' | 'reroll' | ...
   name        text NOT NULL,
   description text NOT NULL,
-  price       integer NOT NULL,             -- in $SMASH mock units
+  price       integer NOT NULL,             -- in RF units (simulated)
   active      boolean NOT NULL DEFAULT true
 );
 
@@ -101,7 +101,7 @@ ALTER TABLE runs ADD COLUMN IF NOT EXISTS match_id uuid;  -- versus rounds only
 
 CREATE TABLE IF NOT EXISTS match_queue (
   user_id     uuid PRIMARY KEY REFERENCES users(id),
-  wager       integer NOT NULL DEFAULT 0,       -- MOCK $SMASH tier (0/50/100/250)
+  wager       integer NOT NULL DEFAULT 0,       -- SIMULATED RF tier (0/50/100/250)
   enqueued_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS matches (
   status     text NOT NULL,                     -- 'active' | 'settled' | 'aborted'
   p1         uuid NOT NULL REFERENCES users(id),
   p2         uuid NOT NULL REFERENCES users(id),
-  wager      integer NOT NULL DEFAULT 0,        -- per player, MOCK $SMASH
+  wager      integer NOT NULL DEFAULT 0,        -- per player, SIMULATED RF
   best_of    integer NOT NULL DEFAULT 5,
   round_secs integer NOT NULL DEFAULT 60,
   round      integer NOT NULL DEFAULT 1,

@@ -77,7 +77,7 @@ const tbaExecute = (friendWallet: Address, to: Address, data: Hex, description: 
 
 /**
  * Plan the on-chain call(s) for one simulated Friend-side movement.
- * `units` are ledger units (0.01 RF). Returns [] for faucet-only reasons.
+ * `units` are ledger units (1 unit = 1 RF). Returns [] for faucet-only reasons.
  */
 export function planFriendMovement(p: {
   reason: string;
@@ -88,12 +88,12 @@ export function planFriendMovement(p: {
   const wei = unitsToWei(p.units);
   const burnData = encodeFunctionData({ abi: ERC20_ABI, functionName: "transfer", args: [RF_BURN_ADDRESS, wei] });
   if (p.reason.startsWith("purchase:") || p.reason === "pool:burn" || p.reason === "versus:rake") {
-    return [tbaExecute(p.friendWallet, RF_TOKEN_ADDRESS, burnData, `Burn ${p.units / 100} RF (${p.reason})`)];
+    return [tbaExecute(p.friendWallet, RF_TOKEN_ADDRESS, burnData, `Burn ${p.units} RF (${p.reason})`)];
   }
   if (p.reason === "pool:entry" || p.reason === "versus:escrow") {
     if (!p.poolContract) throw new Error("TODO(onchain): pool/escrow contract not deployed");
     const approve = encodeFunctionData({ abi: ERC20_ABI, functionName: "approve", args: [p.poolContract, wei] });
-    return [tbaExecute(p.friendWallet, RF_TOKEN_ADDRESS, approve, `Approve exactly ${p.units / 100} RF for ${p.reason}`)];
+    return [tbaExecute(p.friendWallet, RF_TOKEN_ADDRESS, approve, `Approve exactly ${p.units} RF for ${p.reason}`)];
   }
   if (["starter_grant", "daily_bonus", "run_reward", "grant"].includes(p.reason)) return [];
   throw new Error(`No on-chain mapping for ledger reason "${p.reason}"`);

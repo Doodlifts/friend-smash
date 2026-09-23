@@ -11,6 +11,9 @@ interface CatalogItem {
   description: string;
   price: number;
   effect: string;
+  /** REAL $RAREFRIENDS the Friend's wallet must hold to unlock. */
+  unlockRf?: number;
+  unlocked?: boolean;
 }
 
 export default function ShopPage() {
@@ -21,48 +24,20 @@ export default function ShopPage() {
           <Link href="/" className="page-back chunky" aria-label="Back to game">
             <IconBack />
           </Link>
-          <div className="page-title">SMASH SHOP</div>
+          <div className="page-title">POWER-UPS</div>
           <span style={{ width: 40 }} />
         </div>
-        <div style={mockBadge}>$SMASH — testnet / mock balance</div>
+        <div style={mockBadge}>SIMULATED $RAREFRIENDS — no real tokens move</div>
         <div style={modelNote}>
-          Won from daily &amp; weekly leaderboard pools, spent here on power-ups. Pools go live with the token.
+          Unlocked by the REAL $RAREFRIENDS your Friend&apos;s own wallet holds (read-only, never moved). Bought
+          with simulated RF — 100% of every purchase is burned. Usable in practice and versus, never in ranked.
         </div>
         <ShopInner />
         <Link href="/" className="page-cta alt chunky" style={{ marginTop: 18 }}>
-          BACK TO SMASHING
+          BACK TO THE BOARD
         </Link>
       </div>
     </main>
-  );
-}
-
-function ShopCatalogOnly() {
-  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
-  const [msg, setMsg] = useState("Sign-in isn't available on this build yet.");
-  useEffect(() => {
-    fetch("/api/powerups")
-      .then((r) => r.json())
-      .then((d) => setCatalog(d.catalog || []))
-      .catch(() => setMsg("Couldn't load the shop. Give it another tap."));
-  }, []);
-  return (
-    <>
-      <div className="page-note">{msg}</div>
-      <div style={list}>
-        {catalog.map((p) => (
-          <div key={p.key} className="page-row">
-            <div style={itemMain}>
-              <div style={itemName}>{p.name}</div>
-              <div style={itemDesc}>{p.description}</div>
-            </div>
-            <div className="num" style={priceTag}>
-              {p.price} <span style={{ fontSize: 10, opacity: 0.6 }}>$SMASH</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
   );
 }
 
@@ -73,6 +48,7 @@ function ShopInner() {
   const [inventory, setInventory] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [heldRf, setHeldRf] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -83,6 +59,7 @@ function ShopInner() {
       const d = await res.json();
       setCatalog(d.catalog || []);
       if (typeof d.balance === "number") setBalance(d.balance);
+      if (d.holdings) setHeldRf(typeof d.holdings.rf === "number" ? d.holdings.rf : null);
       if (Array.isArray(d.inventory)) {
         const inv: Record<string, number> = {};
         for (const i of d.inventory) inv[i.key] = i.qty;
@@ -129,7 +106,7 @@ function ShopInner() {
   if (!authenticated) {
     return (
       <>
-        <div className="page-note">Sign in to spend $SMASH on power-ups.</div>
+        <div className="page-note">Sign in to spend RF on power-ups.</div>
         <button className="page-cta chunky" onClick={() => login()}>
           SIGN IN
         </button>
@@ -141,7 +118,10 @@ function ShopInner() {
   return (
     <>
       <div className="num" style={balanceStyle}>
-        {balance !== null ? balance.toLocaleString() : "—"} <span style={{ fontSize: 12 }}>$SMASH</span>
+        {balance !== null ? balance.toLocaleString() : "—"} <span style={{ fontSize: 12 }}>RF (simulated)</span>
+      </div>
+      <div style={modelNote}>
+        Friend wallet holds <b className="num">{heldRf !== null ? heldRf.toLocaleString() : "—"}</b> real $RAREFRIENDS
       </div>
       {error && <div className="page-note" style={{ color: "var(--pink-deep)", padding: "6px 8px" }}>{error}</div>}
       <CatalogList catalog={catalog} inventory={inventory} balance={balance} busy={busy} onBuy={buy} />
@@ -169,6 +149,7 @@ function CatalogList({
       {catalog.map((p) => {
         const owned = inventory[p.key] || 0;
         const cantAfford = balance !== null && balance < p.price;
+        const locked = p.unlocked === false;
         return (
           <div key={p.key} className="page-row">
             <div style={itemMain}>
@@ -176,14 +157,19 @@ function CatalogList({
                 {p.name} {owned > 0 && <span className="num" style={ownedTag}>×{owned}</span>}
               </div>
               <div style={itemDesc}>{p.description}</div>
+              {(p.unlockRf ?? 0) > 0 && (
+                <div style={{ ...itemDesc, opacity: 1, marginTop: 2 }}>
+                  {locked ? "🔒" : "🔓"} hold {(p.unlockRf ?? 0).toLocaleString()} $RAREFRIENDS in your Friend&apos;s wallet
+                </div>
+              )}
             </div>
             <button
               className="chunky num"
-              style={{ ...buyBtnSm, ...(disabled || cantAfford ? buyDisabled : {}) }}
-              disabled={disabled || busy === p.key || cantAfford}
+              style={{ ...buyBtnSm, ...(disabled || cantAfford || locked ? buyDisabled : {}) }}
+              disabled={disabled || busy === p.key || cantAfford || locked}
               onClick={() => onBuy(p.key)}
             >
-              {busy === p.key ? "…" : `BUY · ${p.price}`}
+              {busy === p.key ? "…" : locked ? "LOCKED" : `BUY · ${p.price}`}
             </button>
           </div>
         );

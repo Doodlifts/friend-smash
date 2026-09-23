@@ -19,11 +19,11 @@ export const RF_TOKEN_ADDRESS = "0x0779369854d3EcdEA927206718FFD7730C67B71f" as 
 export const RF_BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD" as Address;
 
 /**
- * Ledger unit. Balances are INTEGERS in the DB (never floats): 1 unit = 0.01 RF.
- * The chain uses 18-decimal base units, so 1 unit = 10^16 wei.
+ * Ledger unit. Balances are INTEGERS in the DB (never floats): 1 unit = 1 RF.
+ * The chain uses 18-decimal base units, so 1 unit = 10^18 wei.
  */
 export { UNITS_PER_RF, formatRf } from "./format";
-export const WEI_PER_UNIT = 10n ** 16n;
+export const WEI_PER_UNIT = 10n ** 18n;
 export const unitsToWei = (units: number): bigint => BigInt(Math.trunc(units)) * WEI_PER_UNIT;
 
 export const TOKEN_BOUND_ABI = parseAbi([

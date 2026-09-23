@@ -11,25 +11,38 @@ Built for the [Rare Friends Vibeathon](https://github.com/spokesz/rarefriends-vi
 
 ## What it is
 
-- **Every piece is made of Rare Friends.** Each block cell is a canonical 16×16 Generations portrait read on-chain from the Families registry (via FriendSDK's registry ABI), one family per tetromino shape, in the SDK's palette plus signal green. Line clears shatter into pixel shards.
-- **You play AS your Friend.** Sign in with the wallet holding a hardwired Generations NFT (gen ≥ 1) on Robinhood Chain. Your Friend's portrait is your account; balances, inventory and scores belong to the **NFT**, so they move with it if it's sold (FriendSDK's rule).
-- **Skill decides payouts.** Every run is replayed on the server from its input log (seeded 7-bag, SRS, collision, scoring) — a client can't claim a score it didn't play.
+- **Your Friends ARE the pieces.** Connect (or paste) the wallet that holds your hardwired Generations NFTs: every piece is drawn from the bare 16×16 on-chain pixel sprites of the Friends **in that wallet** (up to 7, one per shape, tinted by the SDK palette), kept upright through rotations. Guests see generic on-chain Friends until they pick theirs.
+- **Weight matters.** A Friend's on-chain Generation + Activation tier (the inputs to its RF reward weight) give it a weight class 1–5. **Heavier Friends fall slower** — up to 1.6× the drop time at class 5 — so long-held, upgraded Friends are easier to place.
+- **Real $RAREFRIENDS unlocks power-ups.** The server reads the real RF balance of the Friend's own wallet (its ERC-6551 token-bound account) — read-only, never moved — and unlocks power-ups by tier. Buying them still costs simulated RF (100% burned).
+- **Skill decides payouts.** Every run is replayed on the server from its input log (seeded 7-bag, SRS, collision, scoring) — a client can't claim a score it didn't play. (Weight changes fall *timing* only; the replay verifies placements, so it can't desync anti-cheat.)
+- **Two ways in:**
+  - **Paste an address (read-only):** no wallet, nothing to sign; FriendSDK's ownership read confirms the address holds a hardwired Friend. Plays as a separate `👁 read-only` account, so a pasted address can never spend or win as the real owner.
+  - **Connect wallet:** one Sign-In-with-Ethereum message (plain text; no transactions, approvals or typed-data permits exist anywhere in the app) → the verified Friend account.
 
-## Economy (simulated RF · 1 unit = 0.01 RF)
+## Economy (simulated RF · 1 unit = 1 $RAREFRIENDS)
 
 | Mechanic | Cost | Where the RF goes |
 |---|---|---|
-| **Ranked run** (daily prize pool) | 0.50 RF per run | 0.40 → today's pool · **0.10 burned** |
+| **Ranked run** (daily prize pool) | 50 RF per run | 40 → today's pool · **10 burned** |
 | **Daily pool payout** | — | Top 10 best ranked scores (one per Friend) split the pot, top-heavy (10,9,…,1 weights, remainder to #1). Pays after 00:00 UTC + 2h grace. A pool with no finishers rolls into the next day. |
-| **Power-ups** (practice + versus only) | 0.40–1.20 RF | **100% burned** |
-| **Versus wagers** (0.5 / 1 / 2.5 RF) | stake each | winner takes pot minus **5% burned**; draws/aborts refund in full |
-| **Starter grant / daily claim** | — | 10 RF once per Friend, 1 RF per UTC day — a demo faucet standing in for buying RF |
+| **Power-ups** (practice + versus only) | 40–120 RF | **100% burned** |
+| **Versus wagers** (50 / 100 / 250 RF) | stake each | winner takes pot minus **5% burned**; draws/aborts refund in full |
+| **Starter grant / daily claim** | — | 1,000 RF once per Friend, 100 RF per UTC day — a demo faucet standing in for buying RF |
+
+**Power-up unlocks (REAL RF held in the Friend's wallet, read-only):**
+
+| Power-up | Unlock | Price (simulated, burned) |
+|---|---|---|
+| Friend Radar — see more upcoming pieces | 1,000 RF | 40 RF |
+| Nap Time — gravity slows for 15s | 10,000 RF | 60 RF |
+| Swap Friend — swap the current piece | 50,000 RF | 50 RF |
+| Pixel Bomb — 3×3 blast | 100,000 RF | 120 RF |
 
 Ranked runs are **equal-loadout**: power-ups are refused server-side, so the pool pays skill, not spend. There is no chance-based payout anywhere.
 
-**Why it's a real economy, not a slot machine:** entries are a closed loop — players fund the pool, players win the pool, a fixed 20% is removed forever. More ranked play = more burn, and the house takes nothing. Power-ups are a pure sink priced for convenience in casual/versus play.
+**Why it's a real economy, not a slot machine:** entries are a closed loop — players fund the pool, players win the pool, a fixed 20% is removed forever. More ranked play = more burn, and the house takes nothing. Power-ups are a pure sink, gated by genuine RF holdings — a reason to hold RF in your Friend.
 
-**Accounting:** every movement is a double-entry transfer between accounts (`friend:<id>`, `system:burn`, `system:faucet`, `system:escrow`, `system:pool:<day>`), idempotent per (account, reason, ref). Σ of all balances is always 0, so "RF burned" and "RF paid to players" are exact (shown live in the pool panel).
+**Accounting:** every movement is a double-entry transfer between accounts (`friend:<id>`, `watch:<id>`, `system:burn`, `system:faucet`, `system:escrow`, `system:pool:<day>`), idempotent per (account, reason, ref). Σ of all balances is always 0, so "RF burned" and "RF paid to players" are exact (shown live in the pool panel).
 
 ## FriendSDK usage & why not the sandbox frame
 
@@ -40,7 +53,8 @@ FriendSDK's sandboxed game frame can only reach the Robinhood RPC and exposes si
 | Wallet discovery, connect, switch to Robinhood (4663) | `@rarefriends/friendsdk/wallet` `createFriendWalletSession` |
 | List the player's hardwired Friends (gen-0 hidden) | `@rarefriends/friendsdk/owned` `readOwnedFriends` |
 | Ownership gate (client + **server**, fresh block) | `@rarefriends/friendsdk/identity` `readGenerationEligibility` |
-| Friend artwork | `@rarefriends/friendsdk/sprites` `createFriendReader`, `FAMILIES_REGISTRY_ABI` |
+| Friend artwork (pieces + portraits) | `@rarefriends/friendsdk/sprites` `createFriendReader`, `spriteFrame`, `FAMILIES_REGISTRY_ABI` |
+| Weight + RF holdings (read-only) | `Generations.tokenURI` traits, `tokenBoundAccount`, `RF.balanceOf` via viem |
 
 **Capability gap / proposal:** a `submitResult(runId, inputLog)` bridge action would let this exact game run inside the official sandbox frame.
 
@@ -59,7 +73,7 @@ npm run dev                  # http://localhost:3000
 
 Checks: `npm test` (unit), `npm run verify:db` (data layer on embedded Postgres), `npx tsc --noEmit`, `npx next build`.
 
-**Requirements to play ranked:** a browser wallet on Robinhood Chain (4663) holding a hardwired Rare Friends Generations NFT (generation ≥ 1). Mobile: use the wallet app's in-app browser (WalletConnect isn't in FriendSDK v0.1.2). Guests can play unranked without a wallet.
+**Requirements to play ranked:** a browser wallet on Robinhood Chain (4663) holding a hardwired Rare Friends Generations NFT (generation ≥ 1). Mobile: use the wallet app's in-app browser (WalletConnect isn't in FriendSDK v0.1.2). Or paste any address holding one (read-only mode). Guests can play unranked without either.
 
 ## Credits
 
