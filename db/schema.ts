@@ -62,7 +62,7 @@ export const runs = pgTable("runs", {
   powerupsConsumed: jsonb("powerups_consumed"),
   // Raw timestamped input log, captured for Phase-3 deterministic replay/audit.
   inputLog: jsonb("input_log"),
-  // Game-config SNAPSHOT at run start (bonus tuning etc.) — the replay uses
+  // Game-config SNAPSHOT at run start (scoring version etc.) — the replay uses
   // this, never the live config, so tuning edits can't break in-flight runs.
   config: jsonb("config"),
   // Client IP at run-start, for per-IP rate limiting (best-effort).
@@ -184,8 +184,8 @@ export const matches = pgTable(
     p1Wins: integer("p1_wins").notNull().default(0),
     p2Wins: integer("p2_wins").notNull().default(0),
     winner: uuid("winner"), // set on settle; null = draw/abort
-    // Versus tuning snapshot shared by every round of THIS match (bonus and
-    // drops disabled). Each round's runs row also carries it for the replay.
+    // Versus tuning snapshot shared by every round of THIS match (item drops
+    // disabled). Each round's runs row also carries it for the replay.
     config: jsonb("config"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     settledAt: timestamp("settled_at", { withTimezone: true }),
@@ -200,18 +200,6 @@ export const matches = pgTable(
 export const gameConfig = pgTable("game_config", {
   id: integer("id").primaryKey(),
   data: jsonb("data").notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
-// Visual-asset OVERRIDES (admin ASSETS panel): swap piece art / the logo
-// without a deploy. `key` is allowlisted in lib/assets.ts; `data` is base64
-// (sprites are tens of KB — fine in Postgres); `meta` = {dx,dy,fw,fh} per the
-// CLAUDE.md art convention. Absent row = the bundled asset ships.
-export const assets = pgTable("assets", {
-  key: text("key").primaryKey(),
-  mime: text("mime").notNull(),
-  data: text("data").notNull(),
-  meta: jsonb("meta"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

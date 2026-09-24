@@ -9,7 +9,7 @@
    each money/state invariant, asserting the invariant AFTER the storm.
 
    Run against a SCRATCH database — never production:
-     STRESS_DATABASE_URL=postgres://postgres:doopie@localhost:55432/doopie_test \
+     STRESS_DATABASE_URL=postgres://postgres:rfsmash@localhost:55432/rfsmash_test \
        npm run stress:db
 
    Each scenario: build a fixture, fire N concurrent workers, then assert what
@@ -40,9 +40,9 @@ const url = process.env.STRESS_DATABASE_URL;
 if (!url) {
   console.error(
     "STRESS_DATABASE_URL is required (a SCRATCH database — never production).\n" +
-      "  docker run -d --name doopie-pg-test -e POSTGRES_PASSWORD=doopie \\\n" +
-      "    -e POSTGRES_DB=doopie_test -p 55432:5432 postgres:16-alpine\n" +
-      "  STRESS_DATABASE_URL=postgres://postgres:doopie@localhost:55432/doopie_test npm run stress:db",
+      "  docker run -d --name rfsmash-pg-test -e POSTGRES_PASSWORD=rfsmash \\\n" +
+      "    -e POSTGRES_DB=rfsmash_test -p 55432:5432 postgres:16-alpine\n" +
+      "  STRESS_DATABASE_URL=postgres://postgres:rfsmash@localhost:55432/rfsmash_test npm run stress:db",
   );
   process.exit(1);
 }

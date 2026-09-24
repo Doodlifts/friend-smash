@@ -15,7 +15,6 @@ import { inventory } from "@/db/schema";
 import { MAX_LOG_EVENTS } from "./anticheat";
 import { logAntiCheatRejection } from "./log";
 import { sanitizeConfig, type GameConfig, sanitizeScoring } from "./gameConfig";
-import { sanitizeBonus } from "./bonus";
 
 /** Tally power-up usage from the input log's 'powerup' events. */
 function countPowerupUsage(log: InputEvent[] | null): Record<string, number> {
@@ -148,16 +147,12 @@ export async function finishRun(
   // if no input log was submitted.
   let scored: ReturnType<typeof scoreSummary>;
   if (Array.isArray(storedLog) && storedLog.length) {
-    // Replay with the run's config SNAPSHOT (bonus tuning). Runs created before
-    // the bonus feature have no snapshot → bonus disabled in replay. snapshot
-    // mode: a missing algorithm version means the run was PLAYED as v1.
-    const snapBonus = run.config
-      ? sanitizeBonus((run.config as { bonus?: unknown }).bonus as never, { snapshot: true })
-      : null;
+    // Replay with the run's scoring SNAPSHOT: a missing algorithm version
+    // means the run was PLAYED as v1.
     const snapScoring = sanitizeScoring(
       run.config ? (run.config as { scoring?: unknown }).scoring : null,
     );
-    const replay = replayRun(run.seed, storedLog, summary, snapBonus, snapScoring);
+    const replay = replayRun(run.seed, storedLog, summary, snapScoring);
     scored = {
       ok: replay.ok,
       score: replay.score,

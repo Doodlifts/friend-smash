@@ -1,5 +1,5 @@
 /* ============================================================
-   lib/session.ts — wallet sessions for Rare Friends (replaces Privy).
+   lib/session.ts — wallet sessions for Rare Friends.
 
    SERVER ONLY. Sign-in is EIP-4361 (Sign-In with Ethereum) on Robinhood chain:
      1. GET  /api/auth/nonce   -> a short-lived, HMAC-signed nonce token

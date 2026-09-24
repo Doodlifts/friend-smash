@@ -41,8 +41,6 @@ export default function Game() {
           translucent wash over it. Stream never leaves the device. */}
       <video id="camBg" autoPlay muted playsInline aria-hidden="true" />
       <div id="bg" dangerouslySetInnerHTML={{ __html: BG_SVG }} />
-      {/* legacy effects layer — kept (the engine may still query it) but hidden */}
-      <div id="goreLayer" aria-hidden="true" />
 
       <div id="app">
         <div id="topbar">
@@ -304,7 +302,6 @@ export default function Game() {
           <button className="bigbtn alt" id="btnRestart1">SMASH AGAIN</button>
           <button className="bigbtn ghost" id="btnHowTo">HOW TO PLAY</button>
           <button className="bigbtn ghost togglebtn" id="btnCamToggle">CAMERA WORLD: OFF</button>
-          <button className="bigbtn ghost togglebtn" id="btnGyroToggle">GYRO TILT: ON</button>
           <button className="bigbtn ghost" id="btnQuit">QUIT</button>
         </div>
       </div>

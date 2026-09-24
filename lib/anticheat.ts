@@ -23,7 +23,7 @@ import { scoreClear, levelForLines, softDropPoints, hardDropPoints } from "./sco
 /** Raw timestamped input, captured now and stored for Phase-3 replay. */
 export interface InputEvent {
   t: number; // ms from run start
-  a: "m" | "rot" | "sd" | "hd" | "hold" | "lock" | "powerup" | "bonus"; // action
+  a: "m" | "rot" | "sd" | "hd" | "hold" | "lock" | "powerup"; // action
   [k: string]: unknown;
 }
 

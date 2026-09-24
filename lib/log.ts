@@ -7,7 +7,7 @@
    install @sentry/nextjs and set SENTRY_DSN, forward errors in captureError()
    (see the TODO) and the rest of the app needs no changes.
 
-   Silent when DOOPIE_LOG_SILENT=1 (set by the DB integration tests so expected
+   Silent when RFSMASH_LOG_SILENT=1 (set by the DB integration tests so expected
    anti-cheat rejections don't clutter their output).
    ============================================================ */
 
@@ -16,7 +16,7 @@ type Json = Record<string, unknown>;
 function emit(stream: "log" | "warn" | "error", entry: Json): void {
   // Read at call time (not module load) so a test setting the flag before the
   // first log — but after this module is imported — still takes effect.
-  if (process.env.DOOPIE_LOG_SILENT === "1") return;
+  if (process.env.RFSMASH_LOG_SILENT === "1") return;
   // One JSON object per line so log drains (Vercel/Datadog/etc.) can parse it.
   console[stream](JSON.stringify({ ts: new Date().toISOString(), ...entry }));
 }

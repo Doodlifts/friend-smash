@@ -3,9 +3,9 @@
 /* ============================================================
    components/auth/AuthProvider.tsx — Rare Friends sign-in (FriendSDK).
 
-   Replaces Privy. Exposes the same shape the rest of the app already used
-   ({ ready, authenticated, user, login, logout, getAccessToken }) so run,
-   match, shop and power-up code only swapped an import.
+   Exposes { ready, authenticated, user, login, logout, getAccessToken } to
+   the run, match, shop and power-up code; sessions are issued by
+   lib/session.ts.
 
    Flow (all FriendSDK where the SDK provides it):
      wallet    createFriendWalletSession  — EIP-6963 discovery, connect, switch to Robinhood

@@ -20,13 +20,11 @@ export default function LeaderboardLink() {
     return () => window.clearInterval(id);
   }, []);
 
-  // Hidden during any ACTIVE-RUN state. "bonus" matters as much as "play":
-  // killBonusOverlay() tears the bonus overlay down before the action phase,
-  // so the board and topbar are fully exposed for several seconds — and this
-  // strip paints over them (z-index 30 vs #app's 1). A player reaching for
-  // MUTE or PAUSE there would hit <Link href="/shop">, which unmounts Game
-  // and ABANDONS the ranked run in progress.
-  if (state === "play" || state === "clearing" || state === "bonus") return null;
+  // Hidden during any ACTIVE-RUN state: this strip paints over the board and
+  // topbar (z-index 30 vs #app's 1). A player reaching for MUTE or PAUSE
+  // there would hit <Link href="/shop">, which unmounts Game and ABANDONS
+  // the ranked run in progress.
+  if (state === "play" || state === "clearing") return null;
 
   // One segmented pill of drawn glyphs — reads as a single intentional control
   // instead of three loose emoji floating over the board.

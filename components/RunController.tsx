@@ -2,8 +2,8 @@
 
 /* components/RunController.tsx — bridges the engine to the run API.
 
-   Lives in the Privy tree (separate from <Game/>). It:
-   - exposes window.__DOOPIE_RUN = { takeRun, finish } for the engine,
+   Lives in the auth tree (separate from <Game/>). It:
+   - exposes window.__RFSMASH_RUN = { takeRun, finish } for the engine,
    - prefetches a server-sanctioned run (seed + signed token) while the player
      is idle and authenticated, so PLAY starts a ranked, deterministic game,
    - submits finished runs to /api/run/finish for SERVER-AUTHORITATIVE scoring,
@@ -16,7 +16,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { BONUS_ALGO_V } from "@/lib/bonus";
 import { getRankedPref } from "@/lib/rf/rankedPref";
 import { formatRf } from "@/lib/rf/format";
 
@@ -88,13 +87,10 @@ function RunControllerInner() {
       const token = await getAccessToken();
       if (!token) return;
       tokenRef.current = token;
-      // Echo the bonus ALGORITHM VERSION this bundle can play — the server
-      // pins the run's snapshot to min(server, client), so a stale tab that
-      // starts a run right after a deploy still verifies (deploy-skew guard).
       const res = await fetch("/api/run/start", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bonusV: BONUS_ALGO_V }),
+        body: "{}",
       });
       if (!res.ok) return; // unconfigured (503) / unauthorized — play unranked
       const data = await res.json();
@@ -114,7 +110,7 @@ function RunControllerInner() {
   //  2. two in-page retries with backoff (network blips, transient 5xx)
   //  3. the payload is stashed in sessionStorage and re-sent on the NEXT
   //     visit if delivery never confirmed (run tokens stay valid for 2h)
-  const PENDING_KEY = "doopiePendingFinish";
+  const PENDING_KEY = "rfsmashPendingFinish";
   const finish = useCallback(
     async (payload: {
       runId: string;
@@ -231,7 +227,7 @@ function RunControllerInner() {
   const consume = useCallback(
     async (payload: { runId: string; runToken: string; key: string; n: number }) => {
       try {
-        // Prefer a FRESH token (Privy refreshes expired ones) — a cached token
+        // Prefer a FRESH token (the wallet session refreshes expired ones) — a cached token
         // can outlive its ~1h TTL mid-run and silently 401 every settlement.
         const token = (await getAccessToken().catch(() => null)) || tokenRef.current;
         if (!token) return;
@@ -251,7 +247,7 @@ function RunControllerInner() {
 
   // Install the bridge for the engine to call.
   useEffect(() => {
-    window.__DOOPIE_RUN = {
+    window.__RFSMASH_RUN = {
       takeRun: () => {
         const r = pending.current;
         pending.current = null;
@@ -271,7 +267,7 @@ function RunControllerInner() {
       },
     };
     return () => {
-      delete window.__DOOPIE_RUN;
+      delete window.__RFSMASH_RUN;
     };
   }, [finish, prefetch, abandon, consume, enterRanked]);
 

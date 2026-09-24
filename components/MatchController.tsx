@@ -2,7 +2,7 @@
 
 /* components/MatchController.tsx — bridges the engine to the VERSUS API.
 
-   Same role as RunController but for matches: exposes window.__DOOPIE_MATCH,
+   Same role as RunController but for matches: exposes window.__RFSMASH_MATCH,
    runs the 2s state poll while the lobby or a match is live, throttles
    heartbeats, and delivers round submissions with the keepalive + retry +
    sessionStorage-stash discipline (a killed tab must never lose a round —
@@ -14,7 +14,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 const POLL_MS = 2_000;
 const POLL_TURF_MS = 1_000; // turn-based needs a snappier handoff
 const HEARTBEAT_MS = 2_000;
-const PENDING_KEY = "doopiePendingRound";
+const PENDING_KEY = "rfsmashPendingRound";
 
 export default function MatchController() {
   return <MatchControllerInner />;
@@ -166,7 +166,7 @@ function MatchControllerInner() {
 
   // Bridge for the engine.
   useEffect(() => {
-    window.__DOOPIE_MATCH = {
+    window.__RFSMASH_MATCH = {
       authed: () => ready && authenticated,
       start: () => startPolling(),
       stop: () => stopPolling(),
@@ -240,7 +240,7 @@ function MatchControllerInner() {
     };
     return () => {
       stopPolling();
-      delete window.__DOOPIE_MATCH;
+      delete window.__RFSMASH_MATCH;
     };
   }, [ready, authenticated, authedFetch, startPolling, stopPolling, pollOnce, finishRound]);
 

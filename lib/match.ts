@@ -11,7 +11,7 @@
    discipline learned from the power-up duplication saga). No on-chain code.
 
    FAIRNESS: both players play the SAME server-chosen seed each round with the
-   SAME config snapshot (bonus rounds, drops, and power-ups disabled) — pure
+   SAME config snapshot (item drops and power-ups disabled) — pure
    piece-for-piece skill. Rounds verify through the standard replay pipeline
    (runs rows, mode='versus') and never touch the leaderboard.
 
@@ -27,7 +27,6 @@ import { randomInt } from "crypto";
 import type { DrizzleDb } from "./db";
 import { ledger, matches, matchQueue, runs, users, type Match } from "@/db/schema";
 import { getGameConfig, sanitizeConfig, type GameConfig, sanitizeScoring } from "./gameConfig";
-import { sanitizeBonus } from "./bonus";
 import { replayRun } from "./replay";
 import { levelForLines } from "./scoring";
 import { scoreSummary, sanityCheck, checkTiming, MAX_LOG_EVENTS, MAX_SCORE_PER_SEC, type InputEvent, type RunSummary } from "./anticheat";
@@ -86,14 +85,13 @@ export interface MatchRound {
   winner: Slot | "tie" | null;
 }
 
-/** The versus config snapshot: solo tuning minus everything unfair or
- *  time-chaotic in a 60s head-to-head — no bonus rounds, no drops. Power-ups
+/** The versus config snapshot: solo tuning minus everything unfair in a 60s
+ *  head-to-head — no item drops. Power-ups
  *  are rejected at verification (any 'powerup' log event fails the round). */
 export function versusConfig(base: GameConfig): GameConfig {
   const cfg = sanitizeConfig(base);
   return {
     ...cfg,
-    bonus: { ...cfg.bonus, enabled: false },
     drops: { ...cfg.drops, enabled: false },
   };
 }
@@ -499,7 +497,7 @@ export async function myMatches(db: DrizzleDb, userId: string, limit = 15): Prom
     return {
       id: m.id,
       mode: (m.mode as MatchMode) || "speed",
-      opp: hmap.get(oppId) || "MYSTERY DOOPIE",
+      opp: hmap.get(oppId) || "MYSTERY FRIEND",
       result,
       myWins: slot === "p1" ? m.p1Wins : m.p2Wins,
       oppWins: slot === "p1" ? m.p2Wins : m.p1Wins,
@@ -591,7 +589,7 @@ export async function matchStateFor(db: DrizzleDb, userId: string): Promise<Matc
           id: m.id,
           myReady: r[slot],
           oppReady: r[slot === "p1" ? "p2" : "p1"],
-          oppHandle: opp?.h || "MYSTERY DOOPIE",
+          oppHandle: opp?.h || "MYSTERY FRIEND",
           oppRecord: oppRec,
           wager: m.wager,
           expiresInMs: Math.max(0, READY_TIMEOUT_MS - (now - new Date(m.createdAt).getTime())),
@@ -629,7 +627,7 @@ export async function matchStateFor(db: DrizzleDb, userId: string): Promise<Matc
       winsNeeded: WINS_NEEDED,
       myWins: slot === "p1" ? m.p1Wins : m.p2Wins,
       oppWins: slot === "p1" ? m.p2Wins : m.p1Wins,
-      oppHandle: opp?.h || "MYSTERY DOOPIE",
+      oppHandle: opp?.h || "MYSTERY FRIEND",
       oppRecord: oppRec,
       wager: m.wager,
       startsAt: Date.parse(cur.startsAt),
@@ -682,8 +680,8 @@ async function resultView(db: DrizzleDb, m: Match, userId: string) {
   const won = m.winner === userId;
   const draw = m.status === "settled" && !m.winner;
   const aborted = m.status === "aborted";
-  // Match ended on a pure row: ship the final board so the client can bleed
-  // the row before the verdict card (the loser never saw the winning move).
+  // Match ended on a pure row: ship the final board so the client can play the
+  // row FX before the verdict card (the loser never saw the winning move).
   let turfFinal: { placements: Array<{ t: string; r: number; x: number; y: number; team: string }>; row: number | null } | null = null;
   if (m.mode === "turf" && how === "row") {
     const t = (m.turf ?? { games: [] }) as unknown as TurfState;
@@ -707,7 +705,7 @@ async function resultView(db: DrizzleDb, m: Match, userId: string) {
     winsNeeded: m.mode === "turf" ? TURF_WINS_NEEDED : WINS_NEEDED,
     wager: m.wager,
     payout: won ? m.wager * 2 - versusRake(m.wager) : draw || aborted ? m.wager : 0,
-    oppHandle: opp?.h || "MYSTERY DOOPIE",
+    oppHandle: opp?.h || "MYSTERY FRIEND",
   };
 }
 
@@ -872,13 +870,10 @@ export async function finishVersusRound(
     if ((Math.trunc(summary.durationMs) || 0) > roundMs + 5_000) {
       rejectedReason = "round overran the clock";
     } else if (storedLog?.length) {
-      const snapBonus = run.config
-        ? sanitizeBonus((run.config as { bonus?: unknown }).bonus as never, { snapshot: true })
-        : null;
       const snapScoring = sanitizeScoring(
       run.config ? (run.config as { scoring?: unknown }).scoring : null,
     );
-    const replay = replayRun(run.seed, storedLog, summary, snapBonus, snapScoring);
+    const replay = replayRun(run.seed, storedLog, summary, snapScoring);
       if (!replay.ok) rejectedReason = replay.reason ?? "replay failed";
       else {
         const claimedLines = (summary.locks || []).reduce((a, b) => a + b, 0);
@@ -1183,7 +1178,7 @@ async function turfView(db: DrizzleDb, m: Match, userId: string, now: number): P
       winsNeeded: TURF_WINS_NEEDED,
       myWins: slot === "p1" ? m.p1Wins : m.p2Wins,
       oppWins: slot === "p1" ? m.p2Wins : m.p1Wins,
-      oppHandle: opp?.h || "MYSTERY DOOPIE",
+      oppHandle: opp?.h || "MYSTERY FRIEND",
       oppRecord: oppRec,
       wager: m.wager,
       myTeam: teamOf(slot),
@@ -1198,7 +1193,7 @@ async function turfView(db: DrizzleDb, m: Match, userId: string, now: number): P
             n: prev.n,
             winner: prev.winner === slot ? "me" : "them",
             reason: prev.reason ?? "row",
-            // Finished board + winning row: the client bleeds the row before
+            // Finished board + winning row: the client plays the row FX before
             // the verdict splash (the loser never saw the winning placement).
             placements: prev.placements.map((p) => ({ t: p.t, r: p.r, x: p.x, y: p.y, team: teamOf(p.by), auto: !!p.auto })),
             row: prev.winner && prev.reason === "row" ? pureRowFor(turfGrid(prev.placements), prev.winner) : null,

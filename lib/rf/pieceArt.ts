@@ -9,9 +9,9 @@
 
    Each cell is a Friend's bare 16×16 pixel sprite (no tile) — the player's
    own Friends when signed in, generic on-chain Friends for guests.
-   Variants (the engine's "clean"/"blood" slots, names kept for replay-safety):
+   Variants (the engine's "clean"/"flash" slots; cosmetic, replay-irrelevant):
      clean — Friend in the piece colour with an ink halo
-     blood — flash: white Friend with a colour halo (pieces in a clearing row)
+     flash — white Friend with a colour halo (pieces in a clearing row)
 
    Output matches the engine's art contract exactly: an <img> whose natural
    size is GRIDS[t] × CELL, body at (0,0) — so rotation, per-cell slicing,
@@ -115,7 +115,7 @@ export function spriteFor(t: PieceType): SpriteRows {
 
 /**
  * One Friend in a 96×96 cell: solid palette block, black 1-bit sprite
- * (6px pixels, edge to edge). "blood" = flash variant for pieces in a
+ * (6px pixels, edge to edge). "flash" = variant for pieces in a
  * clearing row: ink block, white Friend.
  */
 export function drawSpriteCell(c: CanvasRenderingContext2D, x: number, y: number, rows: SpriteRows, color: string, flash: boolean) {
@@ -131,14 +131,14 @@ export function drawSpriteCell(c: CanvasRenderingContext2D, x: number, y: number
  * touch, a faint seam separates Friends, and a thick ink outline traces only
  * the piece's outer silhouette.
  */
-export function pieceCanvas(t: PieceType, variant: "clean" | "blood", cells: number[][], w: number, h: number): HTMLCanvasElement {
+export function pieceCanvas(t: PieceType, variant: "clean" | "flash", cells: number[][], w: number, h: number): HTMLCanvasElement {
   const cv = document.createElement("canvas");
   cv.width = w * ART_CELL;
   cv.height = h * ART_CELL;
   const c = cv.getContext("2d")!;
   c.imageSmoothingEnabled = false;
   const rows = spriteFor(t);
-  const flash = variant === "blood";
+  const flash = variant === "flash";
   const has = new Set(cells.map(([x, y]) => `${x},${y}`));
   for (const [cx, cy] of cells) drawSpriteCell(c, cx * ART_CELL, cy * ART_CELL, rows, PIECE_STYLE[t].color, flash);
   const S = ART_CELL;
@@ -160,7 +160,7 @@ export function pieceCanvas(t: PieceType, variant: "clean" | "blood", cells: num
 }
 
 /** Render a whole piece body (spawn orientation) and return a PNG data URL. */
-export function pieceDataUrl(t: PieceType, variant: "clean" | "blood"): { url: string; fw: number; fh: number } {
+export function pieceDataUrl(t: PieceType, variant: "clean" | "flash"): { url: string; fw: number; fh: number } {
   const [gw, gh] = GRIDS[t];
   const cv = pieceCanvas(t, variant, CELLS[t], gw, gh);
   return { url: cv.toDataURL("image/png"), fw: cv.width, fh: cv.height };

@@ -15,7 +15,7 @@ import { ledger, users } from "@/db/schema";
 import { getLeaderboard, type Period } from "./leaderboard";
 
 /** The proposed revenue split (the "four legs"). Simulation only, pre-token. */
-export const REVENUE_SPLIT = { dood: 0.25, floor: 0.2, leaderboard: 0.35, team: 0.2 } as const;
+export const REVENUE_SPLIT = { burn: 0.25, floor: 0.2, leaderboard: 0.35, team: 0.2 } as const;
 
 function cutoff(period: Period, now: Date): Date | null {
   if (period === "daily") return new Date(now.getTime() - 24 * 3600 * 1000);
@@ -34,7 +34,7 @@ export interface Circulation {
 
 export interface SplitPreview {
   spend: number;
-  dood: number;
+  burn: number;
   floor: number;
   leaderboard: number;
   team: number;
@@ -118,7 +118,7 @@ export const mockEconomyMetrics: EconomyMetrics = {
     const spend = await this.storeSpend(db, period, now);
     return {
       spend,
-      dood: Math.floor(spend * REVENUE_SPLIT.dood),
+      burn: Math.floor(spend * REVENUE_SPLIT.burn),
       floor: Math.floor(spend * REVENUE_SPLIT.floor),
       leaderboard: Math.floor(spend * REVENUE_SPLIT.leaderboard),
       team: Math.floor(spend * REVENUE_SPLIT.team),

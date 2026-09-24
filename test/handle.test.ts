@@ -11,12 +11,12 @@ test("containsProfanity folds leetspeak, separators, and repeats", () => {
 });
 
 test("containsProfanity leaves clean names alone", () => {
-  for (const name of ["PixelDoopie", "DoodleFan42", "smash_king", "GoreLord"]) {
+  for (const name of ["PixelFriend", "FriendFan42", "smash_king", "ShardLord"]) {
     assert.equal(containsProfanity(name), false, name);
   }
 });
 
 test("validateHandle accepts clean names and rejects profane ones", () => {
-  assert.equal(validateHandle("PixelDoopie").ok, true);
+  assert.equal(validateHandle("PixelFriend").ok, true);
   assert.equal(validateHandle("a55hole").ok, false);
 });

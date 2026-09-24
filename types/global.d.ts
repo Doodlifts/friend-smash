@@ -3,7 +3,7 @@
 
 export {};
 
-interface DoopieRun {
+interface RfSmashRun {
   /** Returns a prefetched server-sanctioned run and clears it (sync). */
   takeRun: () => { seed: number; runId: string; runToken: string; config?: unknown } | null;
   /** Fire-and-forget submission of a finished run for authoritative scoring. */
@@ -25,8 +25,8 @@ interface DoopieRun {
   consume: (payload: { runId: string; runToken: string; key: string; n: number }) => void;
 }
 
-interface DoopieMatch {
-  /** True once Privy is ready and the player is signed in. */
+interface RfSmashMatch {
+  /** True once the wallet session is ready and the player is signed in. */
   authed: () => boolean;
   /** Start/stop the 2s match-state poll (lobby open or match live). */
   start: () => void;
@@ -55,9 +55,9 @@ interface DoopieMatch {
 declare global {
   interface Window {
     /** Run-lifecycle bridge set by RunController (auth tree) and read by the engine. */
-    __DOOPIE_RUN?: DoopieRun;
+    __RFSMASH_RUN?: RfSmashRun;
     /** VERSUS bridge set by MatchController (auth tree) and read by the engine. */
-    __DOOPIE_MATCH?: DoopieMatch;
+    __RFSMASH_MATCH?: RfSmashMatch;
     /** Engine test/debug hook (set by startEngine). */
     __DS?: any;
   }

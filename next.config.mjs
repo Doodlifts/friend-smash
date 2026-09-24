@@ -11,12 +11,10 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-  // camera=(self): DOOPIE WORLD's blurred backdrop calls getUserMedia from our
+  // camera=(self): the CAMERA WORLD backdrop calls getUserMedia from our
   // own origin — an empty allowlist here makes Chromium reject it instantly
   // (feature silently dead on Android; iOS Safari happened to be lenient).
-  // Motion/orientation (gyro slosh) is intentionally NOT listed: unlisted
-  // features default to allowing same-origin. Mic and geolocation stay fully
-  // blocked — the game never uses them.
+  // Mic and geolocation stay fully blocked — the game never uses them.
   { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
 ];
 

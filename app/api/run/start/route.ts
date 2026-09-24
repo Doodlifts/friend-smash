@@ -12,7 +12,6 @@ import { createRun, reapExpiredRuns } from "@/lib/runs";
 import { isRunStartLimited, isIpRunStartLimited, MAX_RUN_AGE_MS } from "@/lib/rateLimit";
 import { clientIp } from "@/lib/clientIp";
 import { getGameConfig, publicConfig } from "@/lib/gameConfig";
-import { BONUS_ALGO_V } from "@/lib/bonus";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,14 +46,6 @@ export async function POST(req: Request) {
   // Snapshot the live game config onto the run — the replay verifies against
   // THIS snapshot, so tuning edits never break in-flight runs.
   const config = await getGameConfig(ctx.db);
-  // DEPLOY-SKEW GUARD: pin the snapshot's bonus algorithm version to what the
-  // CLIENT's bundle can actually play (a stale pre-deploy tab sends no body →
-  // v1). Both algorithms are fair, deterministic, and server-seeded, so
-  // letting a client pin the OLDER geometry gives no scoring edge — v1 sword
-  // rounds can only whiff (≤ v2 on average).
-  const body = (await req.json().catch(() => null)) as { bonusV?: number } | null;
-  const rawV = body && typeof body.bonusV === "number" && Number.isFinite(body.bonusV) ? Math.trunc(body.bonusV) : 1;
-  config.bonus.v = Math.min(config.bonus.v ?? BONUS_ALGO_V, Math.max(1, Math.min(BONUS_ALGO_V, rawV)));
   const run = await createRun(ctx.db, ctx.user.id, seed, ip, config);
   const runToken = signRunToken({
     runId: run.id,
@@ -63,6 +54,6 @@ export async function POST(req: Request) {
     issuedAt: Date.now(),
   });
 
-  // The client plays with the same snapshot (bonus tuning + cosmetics).
+  // The client plays with the same snapshot (scoring version + cosmetics).
   return NextResponse.json({ runId: run.id, seed, runToken, config: publicConfig(config) });
 }

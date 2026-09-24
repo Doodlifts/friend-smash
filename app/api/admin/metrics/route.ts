@@ -1,6 +1,6 @@
 /* GET /api/admin/metrics — read-only economy snapshot for the admin dashboard.
 
-   Admin-gated (Privy email allowlist). Returns circulation, the simulated
+   Admin-gated (see lib/admin.ts). Returns circulation, the simulated
    4-leg revenue split, and daily/weekly leaderboard pool previews — all mock,
    computed from the ledger. No fund movement. */
 

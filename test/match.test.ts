@@ -38,13 +38,11 @@ test("matchVerdict: ties extend past BEST_OF (sudden death) until MAX_ROUNDS dra
   assert.equal(matchVerdict(2, 2, MAX_ROUNDS), "draw");
 });
 
-test("versusConfig: bonus + drops disabled, base tuning otherwise intact", () => {
+test("versusConfig: drops disabled, base tuning otherwise intact", () => {
   const cfg = versusConfig(DEFAULT_CONFIG);
-  assert.equal(cfg.bonus.enabled, false);
   assert.equal(cfg.drops.enabled, false);
-  assert.equal(cfg.gore.intensity, DEFAULT_CONFIG.gore.intensity);
+  assert.equal(cfg.fx.intensity, DEFAULT_CONFIG.fx.intensity);
   // Base solo config must be untouched (no shared-reference mutation).
-  assert.equal(DEFAULT_CONFIG.bonus.enabled, false);
   assert.equal(DEFAULT_CONFIG.drops.enabled, true);
 });
 

@@ -77,7 +77,7 @@ Checks: `npm test` (unit), `npm run verify:db` (data layer on embedded Postgres)
 
 ## Credits
 
-- Game engine forked from the builder's own *Doopie Smash*; all Doodles/Doopies art, video and branding removed.
+- Original engine by the builder.
 - Rare Friends artwork: canonical Generations portraits read on-chain, used under FriendSDK's [artwork notice](https://github.com/spokesz/friendsdk/blob/main/NOTICE.md).
 - Fonts: Silkscreen, Space Mono (Google Fonts, OFL).
 - FriendSDK © Rare Friends, Apache-2.0.

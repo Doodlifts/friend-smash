@@ -31,7 +31,7 @@ export function hardDropPoints(cells: number): number {
  * SCORING ALGORITHM VERSION. 1 = the original rules. 2 = adds the SMASH-clear
  * bonus below. Per-run config SNAPSHOTS carry the version a run was PLAYED
  * under, so in-flight runs and historical leaderboard scores keep their rules
- * (same discipline as BONUS_ALGO_V).
+ * (see sanitizeScoring in lib/gameConfig).
  */
 export const SCORING_ALGO_V = 2;
 

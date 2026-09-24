@@ -6,21 +6,20 @@
    changes. Everything is sanitized into hard bounds on read AND write, so a
    bad value can never brick the game or the replay.
 
-   REPLAY RULE: anything that affects scoring/board state (the bonus tuning)
-   is SNAPSHOT onto each run row at run start (runs.config). The replay uses
-   the snapshot, never the live config — tuning changes apply to NEW runs only.
-   Cosmetic values (gore intensity) and server-only values (item drops) don't
+   REPLAY RULE: anything that affects scoring (the scoring version) is
+   SNAPSHOT onto each run row at run start (runs.config). The replay uses the
+   snapshot, never the live config — changes apply to NEW runs only.
+   Cosmetic values (fx intensity) and server-only values (item drops) don't
    need snapshots.
    ============================================================ */
 
 import { eq } from "drizzle-orm";
 import type { DrizzleDb } from "./db";
 import { gameConfig } from "@/db/schema";
-import { sanitizeBonus, type BonusTuning, DEFAULT_BONUS, BONUS_ALGO_V } from "./bonus";
 import { SCORING_ALGO_V } from "./scoring";
 
-export interface GoreTuning {
-  /** 0.25–2 multiplier on droplet/bone counts (cosmetic only). */
+export interface FxTuning {
+  /** 0.25–2 multiplier on clear-shatter shard counts (cosmetic only). */
   intensity: number;
 }
 export interface DropTuning {
@@ -38,15 +37,13 @@ export interface ScoringTuning {
 }
 
 export interface GameConfig {
-  bonus: BonusTuning;
-  gore: GoreTuning;
+  fx: FxTuning;
   drops: DropTuning;
   scoring: ScoringTuning;
 }
 
 export const DEFAULT_CONFIG: GameConfig = {
-  bonus: { ...DEFAULT_BONUS },
-  gore: { intensity: 1 },
+  fx: { intensity: 1 },
   drops: { enabled: true, rate: 0.05, minScore: 300 },
   scoring: { v: SCORING_ALGO_V },
 };
@@ -57,21 +54,14 @@ const clampNum = (v: unknown, lo: number, hi: number, dflt: number) =>
 /** Sanitize an arbitrary (admin-supplied / DB-loaded) doc into a valid config. */
 export function sanitizeConfig(raw: unknown): GameConfig {
   const r = (raw && typeof raw === "object" ? raw : {}) as Partial<GameConfig>;
-  const gore = (r.gore ?? {}) as Partial<GoreTuning>;
+  const fx = (r.fx ?? {}) as Partial<FxTuning>;
   const drops = (r.drops ?? {}) as Partial<DropTuning>;
-  // Like bonus.v, the LIVE scoring version is CODE-OWNED — a stored value must
-  // never pin production to an old algorithm. Snapshots keep theirs (see
-  // sanitizeScoring below, used by the replay path).
   return {
-    // The LIVE config's algorithm version is CODE-OWNED: a stored/echoed `v`
-    // must never pin production to an old algorithm (the previous deploy
-    // persisted v into game_config on every admin save — without this
-    // override, bumping BONUS_ALGO_V would silently never activate). Only
-    // per-run SNAPSHOTS keep their played version (sanitizeBonus(...,
-    // {snapshot:true}) in the replay path).
-    bonus: { ...sanitizeBonus(r.bonus), v: BONUS_ALGO_V },
+    // The LIVE scoring version is CODE-OWNED: a stored/echoed `v` must never
+    // pin production to an old algorithm. Only per-run SNAPSHOTS keep their
+    // played version (see sanitizeScoring below, used by the replay path).
     scoring: { v: SCORING_ALGO_V },
-    gore: { intensity: clampNum(gore.intensity, 0.25, 2, DEFAULT_CONFIG.gore.intensity) },
+    fx: { intensity: clampNum(fx.intensity, 0.25, 2, DEFAULT_CONFIG.fx.intensity) },
     drops: {
       enabled: typeof drops.enabled === "boolean" ? drops.enabled : DEFAULT_CONFIG.drops.enabled,
       rate: clampNum(drops.rate, 0, 0.5, DEFAULT_CONFIG.drops.rate),
@@ -99,14 +89,13 @@ export async function setGameConfig(db: DrizzleDb, raw: unknown): Promise<GameCo
 /** The subset the CLIENT engine needs (safe to expose publicly). Item-drop
  *  odds stay server-side. */
 export function publicConfig(cfg: GameConfig): {
-  bonus: BonusTuning;
-  gore: GoreTuning;
+  fx: FxTuning;
   scoring: ScoringTuning;
 } {
   // `scoring` MUST ride along: unranked play reads this endpoint, and without
   // it free games would silently score under the OLD algorithm while ranked
   // runs (which get a snapshot from /api/run/start) used the new one.
-  return { bonus: cfg.bonus, gore: cfg.gore, scoring: cfg.scoring };
+  return { fx: cfg.fx, scoring: cfg.scoring };
 }
 
 /**

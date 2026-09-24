@@ -14,8 +14,6 @@
    • Abandon rate — abandoned / (abandoned + verified) among settled runs;
      restarts and rage-quits both land here, so treat it as a frustration
      *proxy*, not a verdict.
-   • Bonus rounds — counted from stored input logs (a: "bonus"); scans recent
-     jsonb logs, fine at current scale — revisit if runs/day gets huge.
    ============================================================ */
 
 import { sql } from "drizzle-orm";
@@ -56,7 +54,6 @@ export interface PlayerMetrics {
     verified7d: number;
     abandonRate7d: number | null; // 0..1
     runsPerActive7d: number | null;
-    bonusRounds7d: number;
   };
   economy: {
     circulating: number;
@@ -170,13 +167,6 @@ export async function getPlayerMetrics(db: DrizzleDb): Promise<PlayerMetrics> {
     SELECT count(*) FILTER (WHERE status = 'abandoned')::int AS ab,
            count(*) FILTER (WHERE status = 'verified')::int  AS ok
     FROM runs WHERE finished_at > now() - interval '7 days'
-  `);
-  const [bonus] = await q(db, sql`
-    SELECT count(*)::int AS n
-    FROM runs r, jsonb_array_elements(r.input_log) e
-    WHERE r.finished_at > now() - interval '7 days'
-      AND r.input_log IS NOT NULL AND jsonb_typeof(r.input_log) = 'array'
-      AND e->>'a' = 'bonus'
   `);
 
   const [eco] = await q(db, sql`
@@ -311,7 +301,6 @@ export async function getPlayerMetrics(db: DrizzleDb): Promise<PlayerMetrics> {
       verified7d: num(qual?.verified7),
       abandonRate7d: ab + ok ? ab / (ab + ok) : null,
       runsPerActive7d: wau ? daily.slice(-7).reduce((a, d) => a + d.runs, 0) / wau : null,
-      bonusRounds7d: num(bonus?.n),
     },
     economy: {
       circulating: num(eco?.circulating),

@@ -20,7 +20,6 @@
 
 import { SevenBag, type PieceType } from "./rng";
 import { scoreClear, levelForLines, softDropPoints, hardDropPoints, smashClearPoints } from "./scoring";
-import { resolveBonus, gutsForClear, meterTarget, applyBonusGravity, type BonusTuning } from "./bonus";
 import type { InputEvent, RunSummary } from "./anticheat";
 import {
   COLS,
@@ -135,17 +134,13 @@ function fail(reason: string, score = 0, lines = 0, pieces = 0): ReplayResult {
  * Returns ok:false with a reason on any divergence (illegal sequence/placement
  * or out-of-bound drop counts).
  *
- * `bonus` is the run's CONFIG SNAPSHOT (runs.config.bonus). When absent or
- * disabled the replay behaves exactly as before — older runs stay verifiable.
- * When enabled, the replay recomputes every bonus trigger + deletion from the
- * shared deterministic module (lib/bonus) and cross-checks the client's
- * recorded bonus events; it never trusts the client's deletions or points.
+ * `scoring` is the run's scoring SNAPSHOT (runs.config.scoring); a missing
+ * snapshot means the run was played under v1.
  */
 export function replayRun(
   seed: number,
   log: InputEvent[],
   summary: RunSummary,
-  bonus?: BonusTuning | null,
   scoring?: { v: number } | null,
 ): ReplayResult {
   if (!Array.isArray(log)) return fail("missing input log");
@@ -170,15 +165,6 @@ export function replayRun(
   let combo = -1;
   let b2b = false;
   let pieces = 0;
-
-  // Guts-meter bonus state (deterministic; see lib/bonus.ts). The meter mode
-  // comes from the run's snapshot: guts-weighted (new) or lines (legacy).
-  const bonusOn = Boolean(bonus && bonus.enabled);
-  const meterCfg = bonus ? meterTarget(bonus) : { mode: "lines" as const, target: 18 };
-  let meter = 0; // guts points (or lines, in legacy mode) since the last bonus
-  let bonusIdx = 0;
-  // The client's recorded bonus events, in order, for cross-checking.
-  const claimedBonuses = log.filter((e) => e.a === "bonus");
 
   for (const ev of log) {
     if (ev.a === "hold") {
@@ -250,30 +236,6 @@ export function replayRun(
       level = levelForLines(lines);
       // SMASH bonus: awarded at the level AFTER the clear, matching the engine.
       if (smashOn && wasSmash) score += smashClearPoints(level);
-
-      // ---- guts-meter bonus (deterministic; recomputed, never trusted) ----
-      if (bonusOn && bonus) {
-        meter += meterCfg.mode === "guts" ? gutsForClear(n) : n;
-        if (meter >= meterCfg.target) {
-          const resolution = resolveBonus(board, seed >>> 0, bonusIdx, level, bonus, COLS, TOTAL);
-          // Cross-check the client's recorded bonus event (kind + order). A
-          // missing/mismatched record means the client desynced or tampered.
-          const claimed = claimedBonuses[bonusIdx] as { kind?: string } | undefined;
-          if (!claimed || claimed.kind !== resolution.kind) {
-            return fail(
-              `bonus mismatch at #${bonusIdx} (expected ${resolution.kind}, client recorded ${claimed?.kind ?? "none"})`,
-              score, lines, pieces,
-            );
-          }
-          for (const [bx, by] of resolution.deleted) board[by][bx] = null;
-          // v2+: survivors fall — must mirror the engine exactly (same flag,
-          // same shared function) or the next lock's reachability check fails.
-          if (resolution.gravity) applyBonusGravity(board, COLS, TOTAL);
-          score += resolution.points;
-          meter = 0; // meter resets after a bonus (excess is discarded)
-          bonusIdx++;
-        }
-      }
     } else {
       combo = -1;
     }
@@ -281,11 +243,6 @@ export function replayRun(
     current = bag.next();
     holdUsed = false;
     pieces++;
-  }
-
-  // The client can't claim bonuses the replay didn't produce.
-  if (claimedBonuses.length !== bonusIdx) {
-    return fail(`client recorded ${claimedBonuses.length} bonuses, replay produced ${bonusIdx}`, score, lines, pieces);
   }
 
   // Soft/hard drop points: bounded by what the placements allow, then added.

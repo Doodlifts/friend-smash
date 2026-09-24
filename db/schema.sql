@@ -86,15 +86,6 @@ CREATE TABLE IF NOT EXISTS ledger (
 );
 CREATE INDEX IF NOT EXISTS ledger_user_idx ON ledger(user_id);
 
--- Visual-asset overrides (admin ASSETS panel). See lib/assets.ts.
-CREATE TABLE IF NOT EXISTS assets (
-  key        text PRIMARY KEY,
-  mime       text NOT NULL,
-  data       text NOT NULL,               -- base64 payload (sprites: tens of KB)
-  meta       jsonb,                       -- {dx,dy,fw,fh} per the art convention
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
 -- ---------------- VERSUS (multiplayer) ----------------
 ALTER TABLE runs ADD COLUMN IF NOT EXISTS mode text;      -- null/'solo' | 'versus'
 ALTER TABLE runs ADD COLUMN IF NOT EXISTS match_id uuid;  -- versus rounds only

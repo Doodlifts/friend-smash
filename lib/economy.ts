@@ -133,7 +133,7 @@ export async function spend(
  * NOT MINT the token — players acquire RF by buying it and win it from daily/
  * weekly leaderboard pools, then SPEND it in the store. Set RUN_REWARD_ENABLED=1
  * to re-enable per-run minting (e.g. a temporary testnet faucet). Read at call
- * time so it toggles by env without a rebuild. See [[doopie-smash-tokenomics]].
+ * time so it toggles by env without a rebuild.
  */
 export function runRewardsEnabled(): boolean {
   return process.env.RUN_REWARD_ENABLED === "1";

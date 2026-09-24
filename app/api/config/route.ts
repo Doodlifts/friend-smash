@@ -1,4 +1,4 @@
-/* GET /api/config — the PUBLIC game-tuning subset (bonus + gore cosmetics).
+/* GET /api/config — the PUBLIC game-tuning subset (scoring version + fx cosmetics).
 
    Used by the engine for unranked (no-account) play so free games feel the
    same as ranked ones. Ranked runs get an authoritative snapshot from

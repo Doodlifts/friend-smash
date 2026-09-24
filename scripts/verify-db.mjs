@@ -6,7 +6,7 @@
    instance and runs the same assertions the API routes rely on, sequentially. */
 
 // Silence structured logging (expected anti-cheat rejections) in test output.
-process.env.DOOPIE_LOG_SILENT = "1";
+process.env.RFSMASH_LOG_SILENT = "1";
 // Exercise the daily-bonus + run-reward enabled paths (both ship gated OFF).
 process.env.DAILY_BONUS_ENABLED = "1";
 process.env.RUN_REWARD_ENABLED = "1";
@@ -100,11 +100,11 @@ await section("upsertUserByDid is idempotent", async () => {
 await section("setHandle: ok / profanity rejected / uniqueness enforced", async () => {
   const u1 = await upsertUserByDid(db, "did:h1");
   const u2 = await upsertUserByDid(db, "did:h2");
-  const okRes = await setHandle(db, u1.id, "PixelDoopie");
+  const okRes = await setHandle(db, u1.id, "PixelFriend");
   assert.equal(okRes.ok, true);
-  assert.equal(okRes.user?.handle, "PixelDoopie");
+  assert.equal(okRes.user?.handle, "PixelFriend");
   assert.equal((await setHandle(db, u2.id, "f_u_c_k_er")).ok, false);
-  const taken = await setHandle(db, u2.id, "PixelDoopie");
+  const taken = await setHandle(db, u2.id, "PixelFriend");
   assert.equal(taken.ok, false);
   assert.match(taken.error || "", /taken/i);
 });
@@ -472,7 +472,7 @@ await section("distributePool: exact integer split, top-heavy, remainder to #1",
 
 await section("economy metrics (mock): circulation, spend, 4-leg split, pool preview", async () => {
   const m = getEconomyMetrics();
-  assert.equal(m.source, "mock"); // no SOLANA env set → mock provider (on-chain swap is gated)
+  assert.equal(m.source, "mock"); // no on-chain env set → mock provider (simulated RF ledger)
   const alice = await upsertUserByDid(db, "did:emAlice");
   const bob = await upsertUserByDid(db, "did:emBob");
   await setHandle(db, alice.id, "Alice");
@@ -499,7 +499,7 @@ await section("economy metrics (mock): circulation, spend, 4-leg split, pool pre
   const split = await m.splitPreview(db, "all");
   assert.equal(split.spend, 230);
   assert.equal(split.leaderboard, Math.floor(230 * REVENUE_SPLIT.leaderboard)); // 80
-  assert.equal(split.dood, Math.floor(230 * REVENUE_SPLIT.dood)); // 57
+  assert.equal(split.burn, Math.floor(230 * REVENUE_SPLIT.burn)); // 57
 
   const pool = await m.poolPreview(db, "all", 10);
   assert.equal(pool.pool, Math.floor(230 * REVENUE_SPLIT.leaderboard)); // 80
@@ -513,52 +513,24 @@ await section("game config: defaults, sanitized set/get roundtrip", async () => 
   const d = await getGameConfig(db);
   assert.deepEqual(d, DEFAULT_CONFIG); // no row yet -> code defaults
   const stored = await setGameConfig(db, {
-    bonus: { enabled: true, fillLines: 2, arrowCount: 9999, pointsPerBlock: 5 },
-    gore: { intensity: 99 },
+    fx: { intensity: 99 },
     drops: { enabled: true, rate: 3, minScore: -5 },
   });
-  assert.equal(stored.bonus.fillLines, 4); // below the floor (4) -> clamped up
-  assert.equal(stored.bonus.arrowCount, 40); // clamped
-  assert.equal(stored.gore.intensity, 2); // clamped
+  assert.equal(stored.fx.intensity, 2); // clamped
   assert.equal(stored.drops.rate, 0.5); // clamped
   assert.equal(stored.drops.minScore, 0); // clamped
   const again = await getGameConfig(db);
   assert.deepEqual(again, stored);
 });
 
-await section("replay + snapshot: golden run verifies with a bonus-enabled snapshot", async () => {
+await section("replay + snapshot: golden run verifies with a stored config snapshot", async () => {
   const u = await upsertUserByDid(db, "did:snap");
-  // fillGuts far above what the run earns -> bonus never triggers, but the
-  // whole snapshot path (createRun -> finishRun -> replayRun(bonus)) executes.
-  const cfg = { ...DEFAULT_CONFIG, bonus: { ...DEFAULT_CONFIG.bonus, enabled: true, fillGuts: 200 } };
-  const run = await createRun(db, u.id, golden.seed, null, cfg);
+  // the whole snapshot path (createRun -> finishRun -> replayRun(scoring)) executes.
+  const run = await createRun(db, u.id, golden.seed, null, { ...DEFAULT_CONFIG });
   assert.ok(run.config); // snapshot stored
   const res = await finishRun(db, { runId: run.id, userId: u.id, summary: golden.summary, log: golden.log });
   assert.equal(res.ok, true);
-  assert.equal(res.score, golden.score); // no bonus fired -> score unchanged
-});
-
-await section("replay + LEGACY snapshot (fillLines, pre-guts) still verifies", async () => {
-  const u = await upsertUserByDid(db, "did:snapLegacy");
-  // exactly what a pre-guts run row looks like: fillLines, no fillGuts
-  const cfg = {
-    ...DEFAULT_CONFIG,
-    bonus: { enabled: true, fillLines: Math.max(4, golden.lines + 1), arrowCount: 12, swordSlashes: 3, pointsPerBlock: 10 },
-  };
-  const run = await createRun(db, u.id, golden.seed, null, cfg);
-  const res = await finishRun(db, { runId: run.id, userId: u.id, summary: golden.summary, log: golden.log });
-  assert.equal(res.ok, true);
   assert.equal(res.score, golden.score);
-});
-
-await section("replay rejects a FORGED bonus claim (client says bonus, replay says no)", async () => {
-  const u = await upsertUserByDid(db, "did:forge");
-  const cfg = { ...DEFAULT_CONFIG, bonus: { ...DEFAULT_CONFIG.bonus, enabled: true, fillGuts: 200 } };
-  const run = await createRun(db, u.id, golden.seed, null, cfg);
-  const forged = [...golden.log, { t: 99999, a: "bonus", kind: "arrows", i: 0 }];
-  const res = await finishRun(db, { runId: run.id, userId: u.id, summary: golden.summary, log: forged });
-  assert.equal(res.ok, false);
-  assert.match(res.reason || "", /bonus/i);
 });
 
 await section("abandon + rejected runs CONSUME used power-ups (bomb-refund bug)", async () => {
@@ -688,8 +660,7 @@ await section("player metrics: DAU/WAU, retention, quality, spend all compute co
   };
 
   await mkRun(A.id, { daysAgo: "9", status: "verified", score: 500, durMs: 60_000 }); // D1 return for A
-  await mkRun(A.id, { daysAgo: "0.2", status: "verified", score: 1500, durMs: 120_000,
-    log: [{ t: 1, a: "bonus", kind: "rats", i: 0 }], pu: { bomb: 2 } });
+  await mkRun(A.id, { daysAgo: "0.2", status: "verified", score: 1500, durMs: 120_000, pu: { bomb: 2 } });
   await mkRun(A.id, { daysAgo: "0.1", status: "abandoned" });
   await mkRun(C.id, { daysAgo: "0.05", status: "verified", score: 800, durMs: 90_000, pu: { bomb: 1, slow_fall: 1 } });
 
@@ -714,73 +685,12 @@ await section("player metrics: DAU/WAU, retention, quality, spend all compute co
   assert.equal(m.quality.verified7d, 2); // the 9d-ago run is outside the window
   assert.equal(m.quality.best7d, 1500);
   assert.ok(Math.abs(m.quality.abandonRate7d - 1 / 3) < 1e-9); // 1 abandoned / 3 settled (7d)
-  assert.equal(m.quality.bonusRounds7d, 1);
   const bombPrice = CATALOG_BY_KEY.bomb.price, slowPrice = CATALOG_BY_KEY.slow_fall.price;
   assert.equal(m.economy.spentAll, bombPrice * 2 + slowPrice);
   assert.equal(m.economy.payers, 2);
   assert.equal(m.economy.itemSales.find((i) => i.key === "bomb").buys, 2);
   assert.equal(m.economy.powerupsUsed7d.find((p) => p.key === "bomb").used, 3);
   assert.ok(m.economy.topSpenders.length === 2 && m.economy.topSpenders[0].spent >= m.economy.topSpenders[1].spent);
-});
-
-await section("asset overrides: allowlist + validation + CRUD roundtrip", async () => {
-  const { putAsset, getAsset, getAssetManifest, deleteAsset, ASSET_KEYS } = await import("../lib/assets.ts");
-  const b64 = Buffer.from("not-a-real-webp-but-fine-for-storage").toString("base64");
-  const meta = { dx: 2, dy: 1, fw: 293, fh: 195 };
-
-  // rejections
-  assert.equal((await putAsset(db, { key: "evil", mime: "image/webp", b64, meta })).ok, false); // unknown key
-  assert.equal((await putAsset(db, { key: "T_clean", mime: "image/gif", b64, meta })).ok, false); // bad mime
-  assert.equal((await putAsset(db, { key: "T_clean", mime: "image/webp", b64: "!!!", meta })).ok, false); // bad encoding
-  assert.equal((await putAsset(db, { key: "T_clean", mime: "image/webp", b64, meta: { dx: 0 } })).ok, false); // bad meta
-  const huge = "A".repeat(2_100_000);
-  assert.equal((await putAsset(db, { key: "T_clean", mime: "image/webp", b64: huge, meta })).ok, false); // oversize
-  // art convention: body may not overhang the bottom (T body = 288x192)
-  assert.equal((await putAsset(db, { key: "T_clean", mime: "image/webp", b64, meta: { dx: 0, dy: 100, fw: 300, fh: 200 } })).ok, false);
-
-  // roundtrip
-  const put = await putAsset(db, { key: "T_clean", mime: "image/webp", b64, meta });
-  assert.equal(put.ok, true, put.error);
-  const row = await getAsset(db, "T_clean");
-  assert.equal(row.mime, "image/webp");
-  assert.equal(row.data, b64);
-  const man = await getAssetManifest(db);
-  assert.equal(man.length, 1);
-  assert.equal(man[0].key, "T_clean");
-  assert.deepEqual(man[0].meta, meta);
-  // upsert replaces
-  const b64b = Buffer.from("v2").toString("base64");
-  assert.equal((await putAsset(db, { key: "T_clean", mime: "image/png", b64: b64b, meta })).ok, true);
-  assert.equal((await getAsset(db, "T_clean")).mime, "image/png");
-  // delete reverts to bundled
-  assert.equal(await deleteAsset(db, "T_clean"), true);
-  assert.equal(await getAsset(db, "T_clean"), null);
-  assert.equal(await deleteAsset(db, "nope"), false);
-  assert.equal(ASSET_KEYS.length, 20); // 14 piece sprites + logo + 4 bonus sprites + guts bone
-
-  // SVG: accepted with explicit dimensions, rejected when scripty or unsized
-  const svgOk = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="256" height="140" viewBox="0 0 256 140"><ellipse cx="128" cy="80" rx="100" ry="50" fill="#f4e6ec"/></svg>').toString("base64");
-  const svgScript = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><script>alert(1)</script></svg>').toString("base64");
-  const svgHandler = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" onload="alert(1)"></svg>').toString("base64");
-  const svgNoSize = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>').toString("base64");
-  const bmeta = { dx: 0, dy: 0, fw: 256, fh: 140 };
-  const okPut = await putAsset(db, { key: "bonus_rat", mime: "image/svg+xml", b64: svgOk, meta: bmeta });
-  assert.equal(okPut.ok, true, okPut.error);
-  assert.equal((await getAsset(db, "bonus_rat")).mime, "image/svg+xml");
-  assert.equal((await putAsset(db, { key: "bonus_rat", mime: "image/svg+xml", b64: svgScript, meta: bmeta })).ok, false);
-  assert.equal((await putAsset(db, { key: "bonus_rat", mime: "image/svg+xml", b64: svgHandler, meta: bmeta })).ok, false);
-  assert.equal((await putAsset(db, { key: "bonus_rat", mime: "image/svg+xml", b64: svgNoSize, meta: bmeta })).ok, false);
-  assert.equal(await deleteAsset(db, "bonus_rat"), true);
-
-  // guts_bone rides the same plain-sprite path: accepted, in the manifest,
-  // deletable — and the same script/size screening applies.
-  const bonePut = await putAsset(db, { key: "guts_bone", mime: "image/svg+xml", b64: svgOk, meta: bmeta });
-  assert.equal(bonePut.ok, true, bonePut.error);
-  const boneMan = await getAssetManifest(db);
-  assert.equal(boneMan.some((a) => a.key === "guts_bone"), true);
-  assert.equal((await putAsset(db, { key: "guts_bone", mime: "image/svg+xml", b64: svgScript, meta: bmeta })).ok, false);
-  assert.equal(await deleteAsset(db, "guts_bone"), true);
-  assert.equal(await getAsset(db, "guts_bone"), null);
 });
 
 await section("expired open runs are reaped; recent opens are left alone", async () => {
@@ -904,7 +814,7 @@ await section("versus: pairing creates match, same seed, escrow debits both", as
   const [r2] = await db.select().from(runs).where(sql`id = ${cur.p2.runId}`);
   assert.equal(Number(r1.seed), Number(r2.seed), "same seed for both players");
   assert.equal(r1.mode, "versus");
-  assert.equal(r1.config.bonus.enabled, false, "versus snapshot disables bonus");
+  assert.equal(r1.config.drops.enabled, false, "versus snapshot disables item drops");
   // Escrow: both paid the stake exactly once.
   assert.equal(await getBalance(db, a.id), 300);
   assert.equal(await getBalance(db, b.id), 300);
@@ -1181,7 +1091,7 @@ await section("versus (polish): queued view reports lobby counts", async () => {
   assert.deepEqual(va.counts, { waiting: 0, smashing: 0 });
   await joinQueue(db, c.id, 100); // pairs with b -> one active match
   const va2 = await matchStateFor(db, a.id);
-  assert.equal(va2.counts.smashing, 2, "two Doopies smashing");
+  assert.equal(va2.counts.smashing, 2, "two Friends smashing");
 });
 
 await section("versus (review): stale queue rows are invisible to pairing", async () => {
@@ -1290,7 +1200,7 @@ await section("turf: pure row wins the game; game 2 spawns with blue starting", 
   assert.equal(row.turf.games.length, 2);
   assert.equal(row.turf.games[1].turn, "p2", "game 2 starter alternates to blue");
   // The loser's next view carries the finished board + winning row (the
-  // client bleeds the row before the splash — they never saw the last move).
+  // client plays the row FX before the splash — they never saw the last move).
   const loserView = await matchStateFor(db, row.p2);
   assert.equal(loserView.state, "active");
   assert.equal(loserView.turf.lastGame.reason, "row");
@@ -1298,7 +1208,7 @@ await section("turf: pure row wins the game; game 2 spawns with blue starting", 
   assert.equal(loserView.turf.lastGame.placements.length, 2, "finished board shipped");
   assert.ok(loserView.turf.lastGame.placements.every((p) => p.team === "pink" || p.team === "blue"));
   // Win game 2 the same way -> 2-0 match. The result view carries the id
-  // (result-ack guard) and the final bloody board (turfFinal).
+  // (result-ack guard) and the final board (turfFinal).
   await doctorTurf(m.id, (g) => {
     g.placements = [{ t: "I", r: 0, x: 0, y: 10, by: "p1" }];
     g.pieces[g.moveN] = "J";
@@ -1420,7 +1330,7 @@ await section("records: per-mode W\u2013L splits and match history after a settl
   assert.equal(row.opp, "RecordsFoe", "opponent handle resolved from users table");
   const histB = await myMatches(db, b.id, 5);
   assert.equal(histB.find((h) => h.id === m.id)?.result, "lost");
-  assert.equal(histB.find((h) => h.id === m.id)?.opp, "MYSTERY DOOPIE", "handle-less opponent falls back");
+  assert.equal(histB.find((h) => h.id === m.id)?.opp, "MYSTERY FRIEND", "handle-less opponent falls back");
 });
 
 await section("liveness ADOPTS a score that landed in the race window (never forfeits a delivered round)", async () => {

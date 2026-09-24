@@ -2,7 +2,7 @@
 
 /* components/DailyBonus.tsx — claims the once-per-day RF bonus on load for
    a signed-in player and shows a brief streak toast. Decoupled from the canvas
-   engine (lives in the Privy tree). Claiming is idempotent server-side, so the
+   engine (lives in the auth tree). Claiming is idempotent server-side, so the
    POST is safe to fire on every mount; we only toast when something was awarded. */
 
 import { useEffect, useRef, useState } from "react";

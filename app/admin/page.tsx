@@ -13,15 +13,14 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { IconBack } from "@/components/icons";
 
 type Period = "daily" | "weekly" | "all";
-type AdminTab = "pulse" | "economy" | "ops" | "tuning" | "assets";
+type AdminTab = "pulse" | "economy" | "ops" | "tuning";
 const ADMIN_TABS: { key: AdminTab; label: string }[] = [
   { key: "pulse", label: "PULSE" },
   { key: "economy", label: "ECONOMY" },
   { key: "ops", label: "OPS" },
   { key: "tuning", label: "TUNING" },
-  { key: "assets", label: "ASSETS" },
 ];
-interface Split { spend: number; dood: number; floor: number; leaderboard: number; team: number }
+interface Split { spend: number; burn: number; floor: number; leaderboard: number; team: number }
 interface PoolEntry { rank: number; userId: string; handle: string | null; score: number; prize: number }
 interface Metrics {
   source: string;
@@ -192,7 +191,7 @@ export default function AdminPage() {
               <>
                 <div className="num" style={s.spend}>{n(split.spend)} <span style={{ fontSize: 12 }}>RF spent (sim)</span></div>
                 <div style={s.legs}>
-                  <Leg label="Buy & burn $RAREFRIENDS (sim)" pct="25%" value={n(split.dood)} />
+                  <Leg label="Buy & burn $RAREFRIENDS (sim)" pct="25%" value={n(split.burn)} />
                   <Leg label="Friends floor buyback (sim)" pct="20%" value={n(split.floor)} />
                   <Leg label="Leaderboard rewards" pct="35%" value={n(split.leaderboard)} hi />
                   <Leg label="Team" pct="20%" value={n(split.team)} />
@@ -257,8 +256,6 @@ export default function AdminPage() {
             </>
             )}
 
-            {/* ASSETS — swap visual assets without a deploy */}
-            {tab === "assets" && <AssetsPanel getToken={getAccessToken} />}
           </>
         )}
 
@@ -269,17 +266,7 @@ export default function AdminPage() {
 }
 
 interface TuningDoc {
-  bonus: {
-    enabled: boolean;
-    fillGuts?: number;
-    fillLines?: number;
-    arrowCount: number;
-    swordSlashes: number;
-    ratCount?: number;
-    bananaShots?: number;
-    pointsPerBlock: number;
-  };
-  gore: { intensity: number };
+  fx: { intensity: number };
   drops: { enabled: boolean; rate: number; minScore: number };
 }
 
@@ -350,18 +337,7 @@ function TuningPanel({ getToken }: { getToken: () => Promise<string | null> }) {
 
   return (
     <div>
-      <Flag label="Bonus rounds enabled" value={doc.bonus.enabled} onChange={(v) => setDoc({ ...doc, bonus: { ...doc.bonus, enabled: v } })} />
-      <Num
-        label="Meter: guts to fill (single 2 · double 5 · triple 9 · tetris 14)"
-        value={doc.bonus.fillGuts ?? 20}
-        onChange={(v) => setDoc({ ...doc, bonus: { ...doc.bonus, fillGuts: v, fillLines: undefined } })}
-      />
-      <Num label="Arrows per round" value={doc.bonus.arrowCount} onChange={(v) => setDoc({ ...doc, bonus: { ...doc.bonus, arrowCount: v } })} />
-      <Num label="Sword slashes" value={doc.bonus.swordSlashes} onChange={(v) => setDoc({ ...doc, bonus: { ...doc.bonus, swordSlashes: v } })} />
-      <Num label="Rats per attack" value={doc.bonus.ratCount ?? 6} onChange={(v) => setDoc({ ...doc, bonus: { ...doc.bonus, ratCount: v } })} />
-      <Num label="Banana shots" value={doc.bonus.bananaShots ?? 10} onChange={(v) => setDoc({ ...doc, bonus: { ...doc.bonus, bananaShots: v } })} />
-      <Num label="Bonus points / block (×level)" value={doc.bonus.pointsPerBlock} onChange={(v) => setDoc({ ...doc, bonus: { ...doc.bonus, pointsPerBlock: v } })} />
-      <Num label="Effects intensity (0.25–2)" value={doc.gore.intensity} step={0.25} onChange={(v) => setDoc({ ...doc, gore: { intensity: v } })} />
+      <Num label="Effects intensity (0.25–2)" value={doc.fx.intensity} step={0.25} onChange={(v) => setDoc({ ...doc, fx: { intensity: v } })} />
       <Flag label="Item drops enabled" value={doc.drops.enabled} onChange={(v) => setDoc({ ...doc, drops: { ...doc.drops, enabled: v } })} />
       <Num label="Drop rate (0–0.5)" value={doc.drops.rate} step={0.01} onChange={(v) => setDoc({ ...doc, drops: { ...doc.drops, rate: v } })} />
       <Num label="Drop min score" value={doc.drops.minScore} step={50} onChange={(v) => setDoc({ ...doc, drops: { ...doc.drops, minScore: v } })} />
@@ -484,7 +460,7 @@ interface PulseDto {
   activity: { dau: number; wau: number; mau: number; stickiness: number | null; runsToday: number; totalUsers: number; newUsers7d: number };
   daily: Array<{ day: string; actives: number; runs: number; verified: number; abandoned: number }>;
   retention: { d1: number | null; d7: number | null; cohort1: number; cohort7: number };
-  quality: { medianDurationMs: number | null; medianScore: number | null; bestToday: number | null; best7d: number | null; verified7d: number; abandonRate7d: number | null; runsPerActive7d: number | null; bonusRounds7d: number };
+  quality: { medianDurationMs: number | null; medianScore: number | null; bestToday: number | null; best7d: number | null; verified7d: number; abandonRate7d: number | null; runsPerActive7d: number | null };
   economy: { circulating: number; spentAll: number; spent7d: number; payers: number; payerRate: number | null; spendPerPayer: number | null; itemSales: Array<{ key: string; buys: number; smash: number }>; topSpenders: Array<{ handle: string; spent: number }>; powerupsUsed7d: Array<{ key: string; used: number }> };
   versus?: {
     activeNow: number; queuedNow: number; matches7d: number; fighters7d: number;
@@ -629,7 +605,6 @@ function PlayerPulse({ getToken }: { getToken: () => Promise<string | null> }) {
       <div style={s.statRow}>
         <Stat label="Verified (7d)" value={n(q.verified7d)} />
         <Stat label="Abandon rate" value={pct(q.abandonRate7d)} />
-        <Stat label="Bonus rounds" value={n(q.bonusRounds7d)} accent />
         <Stat label="Best today" value={q.bestToday === null ? "—" : n(q.bestToday)} />
       </div>
       <div style={pp.hintTight}>
@@ -702,18 +677,3 @@ const pp: Record<string, React.CSSProperties> = {
   miniKey: { fontWeight: 700 },
   miniVal: { fontWeight: 800 },
 };
-
-/* ================= ASSETS =================
-   Piece art is no longer uploaded here: every block is drawn from the
-   player's on-chain Rare Friends portrait (16x16 one-bit sprites). */
-
-function AssetsPanel(_props: { getToken: () => Promise<string | null> }) {
-  return (
-    <>
-      <div style={s.section}>Piece art</div>
-      <div className="page-note" style={{ padding: "10px 4px", textAlign: "left" }}>
-        Piece art is generated from on-chain Rare Friends portraits — there is nothing to upload.
-      </div>
-    </>
-  );
-}

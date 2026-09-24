@@ -233,7 +233,7 @@ test("clear-scoring: replay matches an independent flat-stacking simulation", ()
 
 test("smash bonus: v1 (and unversioned) runs score exactly as before", () => {
   const base = replayRun(golden.seed, golden.log, golden.summary);
-  const v1 = replayRun(golden.seed, golden.log, golden.summary, null, { v: 1 });
+  const v1 = replayRun(golden.seed, golden.log, golden.summary, { v: 1 });
   assert.equal(base.ok, true, base.reason);
   assert.equal(v1.score, base.score, "v1 unchanged");
   assert.equal(base.score, golden.score, "unversioned defaults to v1");
@@ -252,8 +252,8 @@ test("smash bonus: v2 pays ONLY for clears the log attests were hard-dropped", (
   const { seed, sim } = simWithClears();
   const base = { locks: [], softDropCells: 0, hardDropCells: 0, durationMs: sim.pieces * 1000 };
   // The bot's log has NO "hd" events — so v2 must score identically to v1.
-  const v1 = replayRun(seed, sim.log as never, base, null, { v: 1 });
-  const v2 = replayRun(seed, sim.log as never, base, null, { v: 2 });
+  const v1 = replayRun(seed, sim.log as never, base, { v: 1 });
+  const v2 = replayRun(seed, sim.log as never, base, { v: 2 });
   assert.equal(v1.ok, true, v1.reason);
   assert.equal(v2.score, v1.score, "clears that were not smashed earn nothing");
 
@@ -265,8 +265,8 @@ test("smash bonus: v2 pays ONLY for clears the log attests were hard-dropped", (
     hdLog.push(ev);
   }
   const smashed = { locks: [], softDropCells: 0, hardDropCells: hdCount, durationMs: sim.pieces * 1000 };
-  const s1 = replayRun(seed, hdLog as never, smashed, null, { v: 1 });
-  const s2 = replayRun(seed, hdLog as never, smashed, null, { v: 2 });
+  const s1 = replayRun(seed, hdLog as never, smashed, { v: 1 });
+  const s2 = replayRun(seed, hdLog as never, smashed, { v: 2 });
   assert.equal(s1.ok, true, s1.reason);
   assert.equal(s2.ok, true, s2.reason);
 
@@ -283,8 +283,8 @@ test("smash bonus: v2 pays ONLY for clears the log attests were hard-dropped", (
 
 test("smash bonus: hard drops that clear NOTHING pay no bonus", () => {
   // The golden run is 18 hard drops and zero clears — pure smashes, no bonus.
-  const v1 = replayRun(golden.seed, golden.log, golden.summary, null, { v: 1 });
-  const v2 = replayRun(golden.seed, golden.log, golden.summary, null, { v: 2 });
+  const v1 = replayRun(golden.seed, golden.log, golden.summary, { v: 1 });
+  const v2 = replayRun(golden.seed, golden.log, golden.summary, { v: 2 });
   assert.equal(v2.ok, true, v2.reason);
   assert.equal(v2.score, v1.score, "a smash only pays when it clears a line");
   assert.equal(v2.score, golden.score);
@@ -292,7 +292,7 @@ test("smash bonus: hard drops that clear NOTHING pay no bonus", () => {
 
 test("smash bonus: the log's hard-drop cells must agree with the summary", () => {
   const bad = { ...golden.summary, hardDropCells: golden.summary.hardDropCells + 7 };
-  const r = replayRun(golden.seed, golden.log, bad, null, { v: 2 });
+  const r = replayRun(golden.seed, golden.log, bad, { v: 2 });
   assert.equal(r.ok, false, "a doctored summary is rejected");
   assert.match(r.reason ?? "", /hard-drop mismatch/);
 });
